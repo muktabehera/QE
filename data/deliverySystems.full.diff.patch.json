@@ -1,0 +1,719 @@
+{
+  "tags": {
+    "16": [
+      {
+        "name": "Reflectors"
+      }
+    ],
+    "_t": "a"
+  },
+  "paths": {
+    "/devices/veDevices/{id}/createRegistrationToken": {
+      "post": {
+        "summary": [
+          "Creates a VideoEdge Device registration token",
+          "Creates a VideoEdge device registration token"
+        ]
+      }
+    },
+    "/devices/veDevices/{id}": {
+      "get": {
+        "summary": [
+          "Gets VideoEdge Device details",
+          "Gets VideoEdge device details"
+        ]
+      },
+      "delete": {
+        "summary": [
+          "Deletes a VideoEdge Device",
+          "Deletes a VideoEdge device"
+        ]
+      },
+      "patch": {
+        "summary": [
+          "Updates VideoEdge Device details",
+          "Updates VideoEdge device details"
+        ]
+      }
+    },
+    "/deliverySystems": [
+      {
+        "get": {
+          "tags": [
+            "Delivery Systems"
+          ],
+          "summary": "List Delivery Systems",
+          "description": "",
+          "operationId": "listDeliveryOptions",
+          "consumes": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "produces": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "parameters": [
+            {
+              "name": "page",
+              "in": "query",
+              "description": "A page specified as start-index;page-size.  (Examples: 0;10  10;10)",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "name": "sort",
+              "in": "query",
+              "description": "A sort specified as sort-column;sort-order. (Examples: name;asc availableDate;dsc)",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "name": "prefix",
+              "in": "query",
+              "description": "Search by name prefix",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "name": "showAll",
+              "in": "query",
+              "description": "If the request token has manageSystem permission, then list entities across all configurations",
+              "required": false,
+              "type": "boolean",
+              "default": false
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/DeliverySystemDetails"
+                }
+              }
+            }
+          }
+        },
+        "post": {
+          "tags": [
+            "Delivery Systems"
+          ],
+          "summary": "Create a Delivery System",
+          "description": "",
+          "operationId": "createDeliveryOption",
+          "consumes": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "produces": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "required": false,
+              "schema": {
+                "$ref": "#/definitions/DeliverySystemDetails"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "schema": {
+                "$ref": "#/definitions/DeliverySystemDetails"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "/deliverySystems/{id}": [
+      {
+        "get": {
+          "tags": [
+            "Delivery Systems"
+          ],
+          "summary": "Get Delivery System details",
+          "description": "",
+          "operationId": "getEntity",
+          "consumes": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "produces": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "Entity identifier",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "schema": {
+                "$ref": "#/definitions/DeliverySystemDetails"
+              }
+            }
+          }
+        },
+        "delete": {
+          "tags": [
+            "Delivery Systems"
+          ],
+          "summary": "Delete a Delivery System",
+          "description": "",
+          "operationId": "deleteEntity",
+          "consumes": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "produces": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "Entity identifier",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "responses": {
+            "default": {
+              "description": "successful operation"
+            }
+          }
+        },
+        "patch": {
+          "tags": [
+            "Delivery Systems"
+          ],
+          "summary": "Update Delivery System details",
+          "description": "",
+          "operationId": "updateEntity",
+          "consumes": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "produces": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "Entity identifier",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "in": "body",
+              "name": "body",
+              "required": false,
+              "schema": {
+                "$ref": "#/definitions/DeliverySystemDetails"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "schema": {
+                "$ref": "#/definitions/DeliverySystemDetails"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "/reflectors": [
+      {
+        "get": {
+          "tags": [
+            "Reflectors"
+          ],
+          "summary": "List Reflectors for current configuration",
+          "description": "",
+          "operationId": "get",
+          "consumes": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "produces": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "parameters": [
+            {
+              "name": "page",
+              "in": "query",
+              "description": "A page specified as start-index;page-size.  (Examples: 0;10  10;10)",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/ConfigurationReflectorServiceDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "/devices/veDevices/{id}/updateReflectorServiceActivationStatus": [
+      {
+        "patch": {
+          "tags": [
+            "VideoEdge Device"
+          ],
+          "summary": "Update reflector service activation status on VideoEdge device",
+          "description": "",
+          "operationId": "updateReflectorServiceActivationStatus",
+          "consumes": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "produces": [
+            "application/json",
+            "application/vnd.qumu.qed+json",
+            "application/vnd.qumu.qed.v1+json"
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "Entity identifier",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "in": "body",
+              "name": "body",
+              "required": false,
+              "schema": {
+                "$ref": "#/definitions/ReflectorServiceDetails"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "schema": {
+                "$ref": "#/definitions/ReflectorServiceDetails"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "definitions": {
+    "BroadcastDetails": {
+      "properties": {
+        "name": {
+          "description": [
+            "Length(1-256)"
+          ],
+          "minLength": [
+            1
+          ],
+          "maxLength": [
+            256
+          ]
+        }
+      },
+      "required": [
+        [
+          "name"
+        ]
+      ]
+    },
+    "ConfigurationDetails": {
+      "properties": {
+        "reflectorServiceActivationStatus": [
+          {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "DEACTIVE"
+            ],
+            "x-jsonview": {
+              "create": true,
+              "update": true,
+              "summary": true,
+              "details": false
+            },
+            "x-mapfield": {
+              "forward": true,
+              "reverse": true,
+              "excluded": false
+            }
+          }
+        ]
+      }
+    },
+    "AuxiliaryFileDetails": {
+      "properties": {
+        "usage": {
+          "enum": {
+            "_t": "a",
+            "_0": [
+              "VARIANTMANIFEST",
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "DistributionDetails": {
+      "required": {
+        "3": [
+          "name"
+        ],
+        "_t": "a"
+      },
+      "properties": {
+        "name": {
+          "description": [
+            "Length(1-256)"
+          ],
+          "minLength": [
+            1
+          ],
+          "maxLength": [
+            256
+          ]
+        }
+      }
+    },
+    "VideoEdgeDeviceDetails": {
+      "properties": {
+        "currentEdgeVersion": {
+          "x-jsonview": [
+            {
+              "create": false,
+              "update": false,
+              "summary": true,
+              "details": true
+            }
+          ]
+        },
+        "deactivateReflectorService": [
+          {
+            "type": "boolean",
+            "x-jsonview": {
+              "create": true,
+              "update": true,
+              "summary": true,
+              "details": false
+            },
+            "x-mapfield": {
+              "forward": true,
+              "reverse": true,
+              "excluded": false
+            }
+          }
+        ]
+      }
+    },
+    "DeliverySystemDetails": [
+      {
+        "type": "object",
+        "required": [
+          "deliverySystemType",
+          "settings"
+        ],
+        "properties": {
+          "visibleInAllConfigurations": {
+            "type": "boolean",
+            "x-jsonview": {
+              "create": true,
+              "update": true,
+              "summary": true,
+              "details": false
+            },
+            "x-mapfield": {
+              "forward": true,
+              "reverse": true,
+              "excluded": false
+            }
+          },
+          "configAdminCanEdit": {
+            "type": "boolean",
+            "x-jsonview": {
+              "create": true,
+              "update": true,
+              "summary": true,
+              "details": false
+            },
+            "x-mapfield": {
+              "forward": true,
+              "reverse": true,
+              "excluded": false
+            }
+          },
+          "configurations": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/definitions/IdContainer"
+            },
+            "x-jsonview": {
+              "create": true,
+              "update": true,
+              "summary": true,
+              "details": false
+            },
+            "x-mapfield": {
+              "forward": true,
+              "reverse": true,
+              "excluded": false
+            }
+          },
+          "id": {
+            "type": "string",
+            "x-jsonview": {
+              "create": true,
+              "update": false,
+              "summary": true,
+              "details": false
+            },
+            "x-mapfield": {
+              "forward": true,
+              "reverse": false,
+              "excluded": false
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-jsonview": {
+              "create": true,
+              "update": false,
+              "summary": true,
+              "details": false
+            },
+            "x-mapfield": {
+              "forward": true,
+              "reverse": true,
+              "excluded": false
+            }
+          },
+          "creationDate": {
+            "type": "string",
+            "format": "date-time",
+            "x-jsonview": {
+              "create": false,
+              "update": false,
+              "summary": true,
+              "details": false
+            },
+            "x-mapfield": {
+              "forward": true,
+              "reverse": false,
+              "excluded": false
+            }
+          },
+          "modificationDate": {
+            "type": "string",
+            "format": "date-time",
+            "x-jsonview": {
+              "create": false,
+              "update": false,
+              "summary": true,
+              "details": false
+            },
+            "x-mapfield": {
+              "forward": true,
+              "reverse": false,
+              "excluded": false
+            }
+          },
+          "deliverySystemType": {
+            "type": "string",
+            "minLength": 1,
+            "x-jsonview": {
+              "create": true,
+              "update": false,
+              "summary": true,
+              "details": false
+            },
+            "x-mapfield": {
+              "forward": true,
+              "reverse": false,
+              "excluded": false
+            }
+          },
+          "settings": {
+            "$ref": "#/definitions/ObjectNode",
+            "x-jsonview": {
+              "create": true,
+              "update": false,
+              "summary": false,
+              "details": true
+            }
+          }
+        }
+      }
+    ],
+    "ObjectNode": [
+      {
+        "type": "object",
+        "properties": {
+          "nodeType": {
+            "type": "string",
+            "enum": [
+              "ARRAY",
+              "BINARY",
+              "BOOLEAN",
+              "MISSING",
+              "NULL",
+              "NUMBER",
+              "OBJECT",
+              "POJO",
+              "STRING"
+            ]
+          },
+          "array": {
+            "type": "boolean"
+          },
+          "null": {
+            "type": "boolean"
+          },
+          "binary": {
+            "type": "boolean"
+          },
+          "short": {
+            "type": "boolean"
+          },
+          "int": {
+            "type": "boolean"
+          },
+          "double": {
+            "type": "boolean"
+          },
+          "pojo": {
+            "type": "boolean"
+          },
+          "object": {
+            "type": "boolean"
+          },
+          "valueNode": {
+            "type": "boolean"
+          },
+          "containerNode": {
+            "type": "boolean"
+          },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "integralNumber": {
+            "type": "boolean"
+          },
+          "bigDecimal": {
+            "type": "boolean"
+          },
+          "bigInteger": {
+            "type": "boolean"
+          },
+          "textual": {
+            "type": "boolean"
+          },
+          "boolean": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "boolean"
+          },
+          "float": {
+            "type": "boolean"
+          },
+          "long": {
+            "type": "boolean"
+          },
+          "floatingPointNumber": {
+            "type": "boolean"
+          }
+        }
+      }
+    ],
+    "ConfigurationReflectorServiceDetails": [
+      {
+        "type": "object",
+        "properties": {
+          "reflectors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ReflectorDetails"
+            }
+          },
+          "reflectorServiceEnabled": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      }
+    ],
+    "ReflectorDetails": [
+      {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "reflectorUrls": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "ReflectorServiceDetails": [
+      {
+        "type": "object",
+        "properties": {
+          "deactivateReflectorService": {
+            "type": "boolean"
+          }
+        }
+      }
+    ]
+  }
+}

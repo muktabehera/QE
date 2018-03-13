@@ -1,0 +1,15 @@
+JWT_alg: HS256
+JWT_Header: "Bearer %s"
+JWT_mac: Lorem ipsum dolor sit amet amet.
+JWT_iss: default
+JWT_sub: admin@{}.com.format(PF_SUT_Name)
+JWT_aud: qed:default
+JWT_qedp:
+    - s
+    - c
+    - g
+    - p
+    - d
+    - m
+    - a
+JWT_exp: null

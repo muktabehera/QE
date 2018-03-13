@@ -1,0 +1,271 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>conftest &#8212; Qumu API Automation 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for conftest</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Global test configuration.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="c1"># import logging.handlers</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+
+<span class="kn">from</span> <span class="nn">box</span> <span class="k">import</span> <span class="n">Box</span>
+<span class="c1"># from faker import Factory</span>
+<span class="kn">from</span> <span class="nn">grappa</span> <span class="k">import</span> <span class="n">expect</span> <span class="k">as</span> <span class="n">_expect</span>
+<span class="kn">from</span> <span class="nn">grappa</span> <span class="k">import</span> <span class="n">should</span> <span class="k">as</span> <span class="n">_should</span>
+
+<span class="kn">from</span> <span class="nn">qe_common</span> <span class="k">import</span> <span class="n">init_logger</span><span class="p">,</span> <span class="n">load_config_file</span><span class="p">,</span> <span class="n">load_auth_file</span><span class="p">,</span> <span class="n">get_config_file_cmdarg</span>
+<span class="kn">import</span> <span class="nn">qe_modules.PathFinder</span> <span class="k">as</span> <span class="nn">_PF</span>
+<span class="kn">import</span> <span class="nn">qe_modules.PathFinderEdge</span> <span class="k">as</span> <span class="nn">_PFE</span>
+
+
+<span class="k">global</span> <span class="n">env</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">load_config_file</span><span class="p">(</span><span class="n">get_config_file_cmdarg</span><span class="p">(</span><span class="s1">&#39;--env&#39;</span><span class="p">))</span>
+<span class="k">global</span> <span class="n">pf_auth</span>
+<span class="n">pf_auth</span> <span class="o">=</span> <span class="n">load_auth_file</span><span class="p">(</span><span class="n">get_config_file_cmdarg</span><span class="p">(</span><span class="s1">&#39;--auth&#39;</span><span class="p">))</span>
+
+<span class="k">global</span> <span class="n">logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">init_logger</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="pytest_addoption"><a class="viewcode-back" href="../conftest.html#conftest.pytest_addoption">[docs]</a><span class="k">def</span> <span class="nf">pytest_addoption</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Define ``env`` and ``auth`` command-line option for py.test.</span>
+
+<span class="sd">    Defaults of **data/qed_env.yml** and **data/pf_auth.yml** respectively.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">addoption</span><span class="p">(</span><span class="s2">&quot;--env&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;data/qed_env.yml&quot;</span><span class="p">,</span>
+                     <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Environment core configuration file.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">addoption</span><span class="p">(</span><span class="s2">&quot;--auth&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;data/pf_auth.yml&quot;</span><span class="p">,</span>
+                     <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Authorization configuration file.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Context"><a class="viewcode-back" href="../conftest.html#conftest.Context">[docs]</a><span class="k">class</span> <span class="nc">Context</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Holds global test configuration parameters &amp; test environment hooks.</span>
+
+<span class="sd">    *config* and *status* are created during object initialization, and are populated by the different tests.</span>
+<span class="sd">    *pf* and *cl* are created during test initialization, as part of the *test_init_and_upgrade_SUT* script.</span>
+
+<span class="sd">    * ``env`` - `Box &lt;https://github.com/cdgriffith/Box&gt;`_ object from *data/qed_env.yml*.</span>
+<span class="sd">    * ``status`` - `Box &lt;https://github.com/cdgriffith/Box&gt;`_ with test status details. Example, flags for PF &amp; PFE clean upgrades.</span>
+<span class="sd">    * ``config`` - `Box &lt;https://github.com/cdgriffith/Box&gt;`_ holding data for driving different test cases,</span>
+<span class="sd">      as generated by the different test scripts.</span>
+<span class="sd">    * ``data`` - `Box &lt;https://github.com/cdgriffith/Box&gt;`_ with data for driving the tests, such as random object IDs.</span>
+<span class="sd">    * ``pf`` - PathFinder class instance for PathFinder system under test.</span>
+<span class="sd">        * ``pf.spec`` - Swagger spec retrieved from PathFinder SUT, possibly patched.</span>
+<span class="sd">        * ``pf.cl`` - `Swagger client &lt;http://bravado.readthedocs.io/en/latest/index.html&gt;`_ instance, to make PathFinder RESTful calls.</span>
+<span class="sd">    * ``cl`` - shorthand link to **pf.cl**.</span>
+<span class="sd">    * ``PF`` - common access to :meth:`PathFinder` module/fixture.</span>
+<span class="sd">    * ``PFE`` - common access to :meth:`PathFinderEdge` module/fixture.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Common variables for all tests, created at initialization.&quot;&quot;&quot;</span>
+        <span class="k">global</span> <span class="n">env</span><span class="p">,</span> <span class="n">pf_auth</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">Box</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">Box</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">Box</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">Box</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">PF_Clean_Upgrade</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">PFE_Clean_Upgrade</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span>
+
+<div class="viewcode-block" id="Context.teardown"><a class="viewcode-back" href="../conftest.html#conftest.Context.teardown">[docs]</a>    <span class="k">def</span> <span class="nf">teardown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Test tear-down.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">------ Test Details:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">PathFinder Server IP: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">QED</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">PathFinder Server name: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">QED_Name</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\t</span><span class="s2">JWT header &amp; token: </span><span class="si">{}</span><span class="s2"> </span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">PF</span><span class="o">.</span><span class="n">PathFinder</span><span class="o">.</span><span class="n">get_secure_token</span><span class="p">(</span>
+                    <span class="n">JWT_alg</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_alg</span><span class="p">,</span>
+                    <span class="n">JWT_Header</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_Header</span><span class="p">,</span>
+                    <span class="n">JWT_mac</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_mac</span><span class="p">,</span>
+                    <span class="n">JWT_iss</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_iss</span><span class="p">,</span>
+                    <span class="n">JWT_sub</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_sub</span><span class="p">,</span>
+                    <span class="n">JWT_aud</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_aud</span><span class="p">,</span>
+                    <span class="n">JWT_qedp</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_qedp</span><span class="p">,</span>
+                    <span class="n">JWT_exp</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_exp</span>
+                <span class="p">)</span>
+            <span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="pf"><a class="viewcode-back" href="../conftest.html#conftest.pf">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">&quot;session&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">pf</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;PathFinder as a fixture.&quot;&quot;&quot;</span>
+    <span class="n">PF</span> <span class="o">=</span> <span class="n">_PF</span>
+    <span class="n">PF</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">printVersion</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">PF</span><span class="o">.</span><span class="n">version</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\t</span><span class="s2">PathFinder version tested: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">PF</span><span class="o">.</span><span class="n">version</span><span class="p">))</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">addfinalizer</span><span class="p">(</span><span class="n">printVersion</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">PF</span></div>
+
+
+<div class="viewcode-block" id="pfe"><a class="viewcode-back" href="../conftest.html#conftest.pfe">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">&quot;session&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">pfe</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;PathFinderEdge as a fixture.&quot;&quot;&quot;</span>
+    <span class="n">PFE</span> <span class="o">=</span> <span class="n">_PFE</span>
+    <span class="n">PFE</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">printVersion</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">PFE</span><span class="o">.</span><span class="n">version</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\t</span><span class="s2">PathFinderEdge version tested: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">PFE</span><span class="o">.</span><span class="n">version</span><span class="p">))</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">addfinalizer</span><span class="p">(</span><span class="n">printVersion</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">PFE</span></div>
+
+
+<div class="viewcode-block" id="context"><a class="viewcode-back" href="../conftest.html#conftest.context">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">&quot;session&quot;</span><span class="p">,</span> <span class="n">autouse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">context</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pf</span><span class="p">,</span> <span class="n">pfe</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Common fixture to access system under test &amp; test environment (test context).&quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">env</span><span class="p">,</span> <span class="n">pf_auth</span>
+    <span class="n">contextInstance</span> <span class="o">=</span> <span class="n">Context</span><span class="p">()</span>
+    <span class="n">contextInstance</span><span class="o">.</span><span class="n">PF</span> <span class="o">=</span> <span class="n">pf</span>
+    <span class="n">contextInstance</span><span class="o">.</span><span class="n">PFE</span> <span class="o">=</span> <span class="n">pfe</span>
+    <span class="n">contextInstance</span><span class="o">.</span><span class="n">envFile</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--env&quot;</span><span class="p">)</span>
+    <span class="n">contextInstance</span><span class="o">.</span><span class="n">authFile</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--auth&quot;</span><span class="p">)</span>
+    <span class="n">contextInstance</span><span class="o">.</span><span class="n">pf</span> <span class="o">=</span> <span class="n">contextInstance</span><span class="o">.</span><span class="n">PF</span><span class="o">.</span><span class="n">PathFinder</span><span class="p">(</span>
+        <span class="n">host</span><span class="o">=</span><span class="n">env</span><span class="o">.</span><span class="n">QED_Name</span><span class="p">,</span>
+        <span class="n">JWT_alg</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_alg</span><span class="p">,</span>
+        <span class="n">JWT_Header</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_Header</span><span class="p">,</span>
+        <span class="n">JWT_mac</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_mac</span><span class="p">,</span>
+        <span class="n">JWT_iss</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_iss</span><span class="p">,</span>
+        <span class="n">JWT_sub</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_sub</span><span class="p">,</span>
+        <span class="n">JWT_aud</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_aud</span><span class="p">,</span>
+        <span class="n">JWT_qedp</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_qedp</span><span class="p">,</span>
+        <span class="n">JWT_exp</span><span class="o">=</span><span class="n">pf_auth</span><span class="o">.</span><span class="n">JWT_exp</span>
+    <span class="p">)</span>
+    <span class="n">contextInstance</span><span class="o">.</span><span class="n">pf</span><span class="o">.</span><span class="n">cl</span> <span class="o">=</span> <span class="n">contextInstance</span><span class="o">.</span><span class="n">pf</span><span class="o">.</span><span class="n">get_schema_objects</span><span class="p">(</span>
+        <span class="n">host</span><span class="o">=</span><span class="n">env</span><span class="o">.</span><span class="n">QED_Name</span><span class="p">,</span> <span class="n">patchFile</span><span class="o">=</span><span class="n">env</span><span class="o">.</span><span class="n">pfSchemaPatch</span><span class="p">)</span>
+    <span class="n">contextInstance</span><span class="o">.</span><span class="n">cl</span> <span class="o">=</span> <span class="n">contextInstance</span><span class="o">.</span><span class="n">pf</span><span class="o">.</span><span class="n">cl</span>  <span class="c1"># same links as in pytest run</span>
+    <span class="n">contextInstance</span><span class="o">.</span><span class="n">sc</span> <span class="o">=</span> <span class="n">contextInstance</span><span class="o">.</span><span class="n">pf</span><span class="o">.</span><span class="n">schema</span>
+    <span class="n">__builtins__</span><span class="p">[</span><span class="s1">&#39;context&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">contextInstance</span>
+    <span class="n">contextInstance</span><span class="o">.</span><span class="n">cl</span> <span class="o">=</span> <span class="n">contextInstance</span><span class="o">.</span><span class="n">pf</span><span class="o">.</span><span class="n">get_schema_objects</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="n">env</span><span class="o">.</span><span class="n">QED_Name</span><span class="p">,</span> <span class="n">patchFile</span><span class="o">=</span><span class="n">env</span><span class="o">.</span><span class="n">pfSchemaPatch</span><span class="p">)</span>
+    <span class="n">contextInstance</span><span class="o">.</span><span class="n">sc</span> <span class="o">=</span> <span class="n">contextInstance</span><span class="o">.</span><span class="n">pf</span><span class="o">.</span><span class="n">schema</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">contextInstance</span><span class="o">.</span><span class="n">pf</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;definitions&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="nb">globals</span><span class="p">()[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">contextInstance</span><span class="o">.</span><span class="n">cl</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">addfinalizer</span><span class="p">(</span><span class="n">contextInstance</span><span class="o">.</span><span class="n">teardown</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">contextInstance</span></div>
+
+
+<div class="viewcode-block" id="should"><a class="viewcode-back" href="../conftest.html#conftest.should">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">should</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Provide should BDD keyword as a fixture.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_should</span></div>
+
+
+<div class="viewcode-block" id="expect"><a class="viewcode-back" href="../conftest.html#conftest.expect">[docs]</a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">expect</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Provide expect BDD keyword as a fixture.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_expect</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/qumu-logo-dark-2x.png" alt="Logo"/>
+    
+    <h1 class="logo logo-name">Qumu API Automation</h1>
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html#setup-sut-components">Setup SUT Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html#configure-sut-components">Configure SUT Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">qe modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functional.html">functional</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Qumu Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,256 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>qe_common &#8212; Qumu API Automation 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for qe_common</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Common PathFinder (QED) and PFE helper functions.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">urlparse</span>
+
+
+<span class="kn">from</span> <span class="nn">box</span> <span class="k">import</span> <span class="n">Box</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">faker</span> <span class="k">import</span> <span class="n">Factory</span>
+<span class="kn">from</span> <span class="nn">tenacity</span> <span class="k">import</span> <span class="n">retry</span><span class="p">,</span> <span class="n">stop_after_delay</span><span class="p">,</span> <span class="n">stop_after_attempt</span><span class="p">,</span> <span class="n">wait_fixed</span>
+
+
+<div class="viewcode-block" id="init_logger"><a class="viewcode-back" href="../qe_common.html#qe_common.init_logger">[docs]</a><span class="k">def</span> <span class="nf">init_logger</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Common logger configuration.&quot;&quot;&quot;</span>
+    <span class="c1"># Set logging level:</span>
+    <span class="c1"># DEBUG will show also plumbum logs</span>
+    <span class="c1"># INFO for local DEBUG</span>
+    <span class="c1"># ERROR for production environment</span>
+    <span class="n">DEBUG_LEVEL</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span>  <span class="c1"># &#39;CRITICAL&#39;, &#39;DEBUG&#39;, &#39;ERROR&#39;, &#39;FATAL&#39;, &#39;INFO&#39;</span>
+
+    <span class="c1"># Logger configuration</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">DEBUG_LEVEL</span><span class="p">)</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+    <span class="c1"># Uncomment for remote syslog:</span>
+    <span class="c1"># handler = logging.handlers.SysLogHandler(address=(helperServer, 514))</span>
+    <span class="c1"># logger.addHandler(handler)</span>
+    <span class="k">return</span> <span class="n">logger</span></div>
+
+<span class="k">global</span> <span class="n">logger</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">init_logger</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="init_allure"><a class="viewcode-back" href="../qe_common.html#qe_common.init_allure">[docs]</a><span class="k">def</span> <span class="nf">init_allure</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Allure replacement for non-pytest execution.&quot;&quot;&quot;</span>
+    <span class="c1"># Make this code work, even when it is not called from pytest</span>
+    <span class="c1"># This will not work across multiple tests or for tests requiring prior info</span>
+    <span class="n">pytest</span><span class="o">.</span><span class="n">allure</span> <span class="o">=</span> <span class="n">C</span><span class="p">()</span>
+    <span class="n">pytest</span><span class="o">.</span><span class="n">allure</span><span class="o">.</span><span class="n">story</span> <span class="o">=</span> <span class="n">stub</span>
+    <span class="n">pytest</span><span class="o">.</span><span class="n">allure</span><span class="o">.</span><span class="n">feature</span> <span class="o">=</span> <span class="n">stub</span>
+    <span class="n">pytest</span><span class="o">.</span><span class="n">allure</span><span class="o">.</span><span class="n">issue</span> <span class="o">=</span> <span class="n">stub</span>
+    <span class="n">pytest</span><span class="o">.</span><span class="n">allure</span><span class="o">.</span><span class="n">link</span> <span class="o">=</span> <span class="n">stub</span></div>
+
+
+<div class="viewcode-block" id="init_context"><a class="viewcode-back" href="../qe_common.html#qe_common.init_context">[docs]</a><span class="k">def</span> <span class="nf">init_context</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Context fixture replacement for non-pytest execution.&quot;&quot;&quot;</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="n">C</span><span class="p">()</span>
+    <span class="n">context</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">Box</span><span class="p">()</span>
+    <span class="n">context</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">Box</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">context</span></div>
+
+
+<div class="viewcode-block" id="load_config_file"><a class="viewcode-back" href="../qe_common.html#qe_common.load_config_file">[docs]</a><span class="k">def</span> <span class="nf">load_config_file</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;qed_env.yml&#39;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Loads Yaml configuration file and return its content in a box.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">filePath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">Box</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filePath</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">config</span></div>
+
+
+<div class="viewcode-block" id="baseName"><a class="viewcode-back" href="../qe_common.html#qe_common.baseName">[docs]</a><span class="k">def</span> <span class="nf">baseName</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return base name of entity for test name ID.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="C"><a class="viewcode-back" href="../qe_common.html#qe_common.C">[docs]</a><span class="k">class</span> <span class="nc">C</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Stub replacement for missing classes.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stub.&quot;&quot;&quot;</span>
+        <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="stub"><a class="viewcode-back" href="../qe_common.html#qe_common.stub">[docs]</a><span class="k">def</span> <span class="nf">stub</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Stub replacement for missing decorators.&quot;&quot;&quot;</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">stub</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">decorator</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">decorated</span><span class="p">(</span><span class="o">*</span><span class="n">argsw</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargsw</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">argsw</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargsw</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">decorated</span>
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+<div class="viewcode-block" id="check"><a class="viewcode-back" href="../qe_common.html#qe_common.check">[docs]</a><span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Log and report exceptions in single swagger call test functions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ``cmd`` (str) - the swagger client command to be executed, without the .result()</span>
+
+<span class="sd">        Kwargs:</span>
+<span class="sd">            ``quiet`` (bool) - Default False, so errors are logged on &#39;error&#39; level.</span>
+<span class="sd">                           When True, errors will be reported on debug level, so to suppress</span>
+<span class="sd">                           unnecessary logs for expected error cases.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Returns the cmd result - cmd.result()</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            Re-raises any underlying swagger client exception.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;response&#39;</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>    <span class="c1"># Try logging response details</span>
+            <span class="k">if</span> <span class="n">quiet</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Got an error in response: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Error response details: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Got an error in response: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Error response details: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+        <span class="k">raise</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="retry_check"><a class="viewcode-back" href="../qe_common.html#qe_common.retry_check">[docs]</a><span class="nd">@retry</span><span class="p">(</span><span class="n">stop</span><span class="o">=</span><span class="p">(</span><span class="n">stop_after_delay</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span> <span class="o">|</span> <span class="n">stop_after_attempt</span><span class="p">(</span><span class="mi">30</span><span class="p">)),</span> <span class="n">wait</span><span class="o">=</span><span class="n">wait_fixed</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">reraise</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">retry_check</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">resultAttribute</span><span class="p">,</span> <span class="n">expectedResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Log and report exceptions in single swagger call test functions.</span>
+
+<span class="sd">    cmd - the swagger client command to be executed, without the .result()</span>
+<span class="sd">    resultAttribute - attribute in the result to compare to the expected result</span>
+<span class="sd">    expectedResult - expected return from cmd.result()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;resultAttribute&#39;</span><span class="p">]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;response&#39;</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>    <span class="c1"># Try logging response details</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Got an error in response: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Error response details: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+        <span class="k">raise</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="n">expectedResult</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/qumu-logo-dark-2x.png" alt="Logo"/>
+    
+    <h1 class="logo logo-name">Qumu API Automation</h1>
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">qe modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../functional.html">functional</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Qumu Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

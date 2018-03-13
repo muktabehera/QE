@@ -1,0 +1,285 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Installation &#8212; Qumu API Automation 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting Started" href="getting_started.html" />
+    <link rel="prev" title="Introduction" href="intro.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="basics">
+<h2>Basics<a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
+<p>Install <a class="reference external" href="https://www.python.org/downloads/">Python</a> for your operating system environemnt.
+This framework have been tested with latest Python version 2.7.x and Python 3.x versions.
+It is recommended to use latest Python 3.x for future upgradability and compatibility.</p>
+<p>On a command prompt run the following (you may have to run the shell with elevated privelages:
+<em>run-as-administrator</em> ; <em>sudo -H …</em> ; or other, depending on the OS):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">ensurepip</span> <span class="o">--</span><span class="n">upgrade</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="clone-code-repository">
+<h2>Clone Code Repository<a class="headerlink" href="#clone-code-repository" title="Permalink to this headline">¶</a></h2>
+<p>You should (already) have <strong>git</strong> client installed on your system.
+While UI-based clients exist and can be used, it is recommended that git command line is used.</p>
+<p>For Windows clients you can <a class="reference external" href="https://git-for-windows.github.io/">get git for Windows</a> distribution,
+make sure to install ssh and coreutils, as part of the installation, and enable command shell integrations.</p>
+<ul>
+<li><p class="first">Fork this <a class="reference external" href="http://bitbucket.qumu.com/projects/QA/repos/qe/browse">automation project</a>, to your user space:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>http://bitbucket.qumu.com/projects/QA/repos/qe?fork
+</pre></div>
+</div>
+</li>
+<li><p class="first">Clone your fork to the local machine:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="o">--</span><span class="n">recursive</span> <span class="n">http</span><span class="p">:</span><span class="o">//&lt;</span><span class="n">username</span><span class="o">&gt;</span><span class="nd">@bitbucket</span><span class="o">.</span><span class="n">qumu</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">scm</span><span class="o">/~&lt;</span><span class="n">username</span><span class="o">&gt;/</span><span class="n">qe</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Get into the directory cloned.</p>
+</li>
+<li><p class="first">Add reference to the original remote code:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">remote</span> <span class="n">add</span> <span class="n">upstream</span> <span class="n">http</span><span class="p">:</span><span class="o">//&lt;</span><span class="n">username</span><span class="o">&gt;</span><span class="nd">@bitbucket</span><span class="o">.</span><span class="n">qumu</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">scm</span><span class="o">/</span><span class="n">qa</span><span class="o">/</span><span class="n">qe</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">See <a class="reference external" href="https://confluence.qumu.com/display/auto/Git+Guidance">Confluence GIT Guide</a> for basic GIT reference and pointers to additional documentation.</p>
+</div>
+</div>
+<div class="section" id="python-virtual-environment">
+<h2>Python Virtual Environment<a class="headerlink" href="#python-virtual-environment" title="Permalink to this headline">¶</a></h2>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p class="last"><strong>Highly recommended</strong> - Use <a class="reference external" href="http://docs.python-guide.org/en/latest/dev/virtualenvs/">python virtual environment</a>.</p>
+</div>
+<p>Install (with elevated privileges) <strong>virtualenv</strong>, and use it for the reminder of the installation process:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">upgrade</span> <span class="n">virtualenv</span>
+</pre></div>
+</div>
+<p>and then, activate the virtual environment:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">&lt;</span><span class="n">my_qe_automation_project_folder</span><span class="o">&gt;</span>
+<span class="n">virtualenv</span> <span class="o">.</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">virtualenv</span> <span class="o">&lt;</span><span class="n">my_qe_automation_project_folder</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>on Linux / Unix / MAC:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="o">&lt;</span><span class="n">my_qe_automation_project_folder</span><span class="o">&gt;/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+</pre></div>
+</div>
+<p>on Windows:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">my_qe_automation_project_folder</span><span class="o">&gt;/</span><span class="n">Scripts</span><span class="o">/</span><span class="n">activate</span><span class="o">.</span><span class="n">bat</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">To exit the virtual environment, run <em>deactivate</em> from the command prompt.</p>
+</div>
+<p>Continue the installation, inside a virtualized environmet and/or with elevated priveleges, and install the following dependencies:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">upgrade</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+<p>Patch bravado-core:</p>
+<p>on Linux / Unix / MAC (please note to pick the path for your python version):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cp</span> <span class="o">-</span><span class="n">v</span> <span class="n">bravado</span><span class="o">-</span><span class="n">core</span><span class="o">-</span><span class="n">patch</span><span class="o">/*.</span><span class="n">py</span> <span class="n">lib</span><span class="o">/</span><span class="n">python2</span><span class="o">.</span><span class="mi">7</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">bravado_core</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cp</span> <span class="o">-</span><span class="n">v</span> <span class="n">bravado</span><span class="o">-</span><span class="n">core</span><span class="o">-</span><span class="n">patch</span><span class="o">/*.</span><span class="n">py</span> <span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="o">.</span><span class="mi">6</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">bravado_core</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>on on Windows:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">copy</span> <span class="n">bravado</span><span class="o">-</span><span class="n">core</span><span class="o">-</span><span class="n">patch</span>\<span class="o">*.</span><span class="n">py</span> <span class="n">Lib</span>\<span class="n">site</span><span class="o">-</span><span class="n">packages</span>\<span class="n">bravado_core</span>\
+</pre></div>
+</div>
+<div class="admonition-todo admonition" id="index-0">
+<p class="first admonition-title">Todo</p>
+<p class="last">Add video validation installation items.</p>
+</div>
+</div>
+<div class="section" id="highly-recommended-optional-add-ons">
+<h2>Highly Recommended &amp; Optional Add-ons<a class="headerlink" href="#highly-recommended-optional-add-ons" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first">Interactive python shell:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">upgrade</span> <span class="n">ptpython</span>
+</pre></div>
+</div>
+<p>… and see <a class="reference external" href="https://github.com/jonathanslenders/ptpython">ptpython</a> website for details about its features.
+The interactive shell can be used to test the automation code, while providing auto-completion, interactive documentation, and easy introspection of objects.</p>
+</li>
+<li><p class="first">To build documentation:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">upgrade</span> <span class="o">-</span><span class="n">r</span> <span class="n">docs</span><span class="o">/</span><span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+<p>… and then run the make file in the docs folder.</p>
+</li>
+<li><p class="first">To generate test report, install <a class="reference external" href="https://github.com/allure-framework/allure2">allure</a> on supported platforms, per the instructions on the allure website.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="test-environment-setup">
+<h2>Test Environment Setup<a class="headerlink" href="#test-environment-setup" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+<div class="section" id="setup-sut-components">
+<h1>Setup SUT Components<a class="headerlink" href="#setup-sut-components" title="Permalink to this headline">¶</a></h1>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This must never be done to a production environment of any test environemnt open to external networks.</p>
+</div>
+<p>On PathFinder and PathFinderEdge servers:</p>
+<ul>
+<li><p class="first">Allow applianceadmin sudo without password, by editing <code class="docutils literal"><span class="pre">/etc/sudoers</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">PFE</span>
+
+<span class="c1"># applianceadmin   ALL=(ALL:ALL) NOPASSWD: ALL</span>
+
+<span class="n">PF</span>
+
+<span class="c1"># %sudo   ALL=(ALL:ALL) NOPASSWD: ALL</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><a class="reference external" href="https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/#platform-mac">Generate private SSH</a>
+keys for the test client (machine running the automation code),
+and add the public key to .ssh/authorized_keys for PathFinder user1 and PFE applianceadmin.</p>
+</li>
+<li><p class="first">Last step has to be applied to continuous integration slaves. These slaves should have python and virtualenv installed as a prerequisite.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="configure-sut-components">
+<h1>Configure SUT Components<a class="headerlink" href="#configure-sut-components" title="Permalink to this headline">¶</a></h1>
+<ul>
+<li><p class="first">Make a copy of <code class="docutils literal"><span class="pre">data/qed_env.yml</span></code> under the same folder (or subfolder of data).</p>
+</li>
+<li><p class="first">Edit to match your environemnt.</p>
+</li>
+<li><p class="first">When running the py.test tests, specify the file using –env argument. For example:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">py</span><span class="o">.</span><span class="n">test</span> <span class="o">--</span><span class="n">html</span><span class="o">=</span><span class="n">report</span><span class="o">/</span><span class="n">report</span><span class="o">.</span><span class="n">html</span> <span class="o">--</span><span class="n">junitxml</span><span class="o">=</span><span class="n">report</span><span class="o">/</span><span class="n">report</span><span class="o">.</span><span class="n">xml</span> <span class="o">--</span><span class="n">alluredir</span> <span class="n">allure</span> <span class="o">--</span><span class="n">disable</span><span class="o">-</span><span class="n">pytest</span><span class="o">-</span><span class="n">warnings</span> <span class="o">--</span><span class="n">disable</span><span class="o">-</span><span class="n">warnings</span> <span class="o">--</span><span class="n">env</span> <span class="n">data</span><span class="o">/</span><span class="n">qed_env</span><span class="o">.</span><span class="n">yml</span> <span class="n">functional</span><span class="o">/</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="_static/qumu-logo-dark-2x.png" alt="Logo"/>
+    
+    <h1 class="logo logo-name">Qumu API Automation</h1>
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basics">Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#clone-code-repository">Clone Code Repository</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#python-virtual-environment">Python Virtual Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#highly-recommended-optional-add-ons">Highly Recommended &amp; Optional Add-ons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#test-environment-setup">Test Environment Setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#setup-sut-components">Setup SUT Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#configure-sut-components">Configure SUT Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">qe modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="functional.html">functional</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="intro.html" title="previous chapter">Introduction</a></li>
+      <li>Next: <a href="getting_started.html" title="next chapter">Getting Started</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Qumu Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/installation.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

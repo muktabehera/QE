@@ -1,0 +1,10 @@
+functional
+==========
+
+.. toctree::
+   :maxdepth: 4
+
+.. automodule:: functional
+    :members:
+    :undoc-members:
+    :show-inheritance:

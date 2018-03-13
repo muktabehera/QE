@@ -1,0 +1,167 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>functional &#8212; Qumu API Automation 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="qe_common module" href="qe_common.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-functional">
+<span id="functional"></span><h1>functional<a class="headerlink" href="#module-functional" title="Permalink to this headline">¶</a></h1>
+<p>PathFinder Functional Tests.</p>
+<p>Tests are written with py.test.
+Folders contain different test domains.</p>
+<div class="section" id="module-functional.init_PF_test">
+<span id="init-pf-test-py"></span><h2>init_PF_test.py<a class="headerlink" href="#module-functional.init_PF_test" title="Permalink to this headline">¶</a></h2>
+<p>Initialize test environment &amp; context and upgrade SUT.</p>
+<p>Configuration file for this test is <code class="docutils literal"><span class="pre">data/qed_env.yml</span></code>.</p>
+<dl class="function">
+<dt id="functional.init_PF_test.init_interactive">
+<code class="descclassname">functional.init_PF_test.</code><code class="descname">init_interactive</code><span class="sig-paren">(</span><em>context</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functional/init_PF_test.html#init_interactive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#functional.init_PF_test.init_interactive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all object definitions from schema to be used in an interactive shell.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="functional.init_PF_test.init_interactive_sa">
+<code class="descclassname">functional.init_PF_test.</code><code class="descname">init_interactive_sa</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/functional/init_PF_test.html#init_interactive_sa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#functional.init_PF_test.init_interactive_sa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all object definitions from schema to be used in an interactive shell.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="functional.init_PF_test.setup_module">
+<code class="descclassname">functional.init_PF_test.</code><code class="descname">setup_module</code><span class="sig-paren">(</span><em>module</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functional/init_PF_test.html#setup_module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#functional.init_PF_test.setup_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test setup example.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="functional.init_PF_test.teardown_module">
+<code class="descclassname">functional.init_PF_test.</code><code class="descname">teardown_module</code><span class="sig-paren">(</span><em>module</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/functional/init_PF_test.html#teardown_module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#functional.init_PF_test.teardown_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test tear-down example.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-functional.setup_PF_test">
+<span id="setup-pf-test-py"></span><h2>setup_PF_test.py<a class="headerlink" href="#module-functional.setup_PF_test" title="Permalink to this headline">¶</a></h2>
+<p>Common PathFinder configuration setup.</p>
+<ul class="simple">
+<li>create configuration</li>
+<li>create authorization</li>
+<li>lock server</li>
+<li>create origin</li>
+<li>create PFE global configuration</li>
+</ul>
+<p>Common configuration file is <code class="docutils literal"><span class="pre">data/qed_env.yml</span></code>.
+Additional configuration for this test is <code class="docutils literal"><span class="pre">setup_PF.yml</span></code> file.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="_static/qumu-logo-dark-2x.png" alt="Logo"/>
+    
+    <h1 class="logo logo-name">Qumu API Automation</h1>
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#setup-sut-components">Setup SUT Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#configure-sut-components">Configure SUT Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">qe modules</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">functional</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-functional.init_PF_test">init_PF_test.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-functional.setup_PF_test">setup_PF_test.py</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="qe_common.html" title="previous chapter">qe_common module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Qumu Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/functional.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

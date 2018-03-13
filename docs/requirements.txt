@@ -1,0 +1,15 @@
+sphinx
+sphinx-http-domain
+sphinx-links
+sphinx-swagger
+sphinx-automodapi
+sphinxcontrib-httpdomain
+sphinxcontrib-httpdomain-update
+sphinxcontrib-napoleon2
+sphinx-autodoc-typehints
+sphinxcontrib-openapi
+sphinxcontrib-swaggerdoc
+sphinxcontrib-vcs
+sphinxcontrib-yaml
+sphinx-autobuild
+

@@ -1,0 +1,7 @@
+videoEdgeGlobalConfig:
+  deliveryServicePort: '80'
+  deliveryServiceProtocol: http
+originBase:
+  uri: 'file://./sample-content/'
+  roles:
+    - 'common.filesystemfetch'

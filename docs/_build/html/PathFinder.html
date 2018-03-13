@@ -1,0 +1,246 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>PathFinder module &#8212; Qumu API Automation 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="PathFinderEdge module" href="PathFinderEdge.html" />
+    <link rel="prev" title="qe modules" href="modules.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-qe_modules.PathFinder">
+<span id="pathfinder-module"></span><h1>PathFinder module<a class="headerlink" href="#module-qe_modules.PathFinder" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-PathFinderEdge."></span><p>PathFinder module for handling remote control, upgrade, and RESTful API communication.</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">Schema</span></code> class is holding the Swagger schema retrieved from the PathFinder server, with potential patches to the schema.</li>
+<li><code class="docutils literal"><span class="pre">PathFinderSUT</span></code> class is for hadnling PathFinder upgrades.</li>
+<li><code class="docutils literal"><span class="pre">PathFinder</span></code> class wrapps the RESTful / Swagger API calls to the PathFinder server under test.</li>
+</ul>
+<p>All objects are having sane defaults, to allow easy usage in San-Bruno lab environment.
+This means that in SB lab, calling most functions should “just work” as-is,
+but porper configuration variables should be applied elsewhere.
+Please see below for more details.</p>
+<dl class="class">
+<dt id="qe_modules.PathFinder.PathFinder">
+<em class="property">class </em><code class="descclassname">qe_modules.PathFinder.</code><code class="descname">PathFinder</code><span class="sig-paren">(</span><em>host=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinder.html#PathFinder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinder.PathFinder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>PathFinder Swagger client, with support for JWT authentication.</p>
+<p><em>get_token</em> and <em>get_token_with_options</em> are provided as statuc methods,
+and do not require class instance.</p>
+<dl class="attribute">
+<dt id="qe_modules.PathFinder.PathFinder.empty_options">
+<code class="descname">empty_options</code><em class="property"> = {}</em><a class="headerlink" href="#qe_modules.PathFinder.PathFinder.empty_options" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="qe_modules.PathFinder.PathFinder.get_PathFinder_schema">
+<code class="descname">get_PathFinder_schema</code><span class="sig-paren">(</span><em>host=None</em>, <em>patchFile=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinder.html#PathFinder.get_PathFinder_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinder.PathFinder.get_PathFinder_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get latest PF schema from SUT.</p>
+<p>Update schema per patch file, if specified.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="qe_modules.PathFinder.PathFinder.get_schema_objects">
+<code class="descname">get_schema_objects</code><span class="sig-paren">(</span><em>host=None</em>, <em>patchFile=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinder.html#PathFinder.get_schema_objects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinder.PathFinder.get_schema_objects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all object definitions from schema.</p>
+<p>Calls self.get_PathFinder_schema, and then
+Returns a swagger client.
+Keeps schema in class instance method .schema.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="qe_modules.PathFinder.PathFinder.get_secure_token">
+<em class="property">static </em><code class="descname">get_secure_token</code><span class="sig-paren">(</span><em>JWT_alg='HS256', JWT_Header='Bearer %s', JWT_mac='This_is_a_Test_QED_MAC_Key_Which_Needs_to_be_at_Least_32_Bytes_Long', JWT_iss='default', JWT_sub='admin&#64;automation-pf03.qumu.media.com', JWT_aud='qed:default', JWT_qedp=['s', 'c', 'g', 'p', 'd', 'm', 'a'], JWT_exp=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinder.html#PathFinder.get_secure_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinder.PathFinder.get_secure_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate JWT header token for communication with PathFinder API.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="qe_modules.PathFinder.PathFinder.get_token">
+<code class="descname">get_token</code><span class="sig-paren">(</span><em>secure=None, returnResponse=False, JWT_alg='HS256', JWT_Header='Bearer %s', JWT_mac='This_is_a_Test_QED_MAC_Key_Which_Needs_to_be_at_Least_32_Bytes_Long', JWT_iss='default', JWT_sub='admin&#64;automation-pf03.qumu.media.com', JWT_aud='qed:default', JWT_qedp=['s', 'c', 'g', 'p', 'd', 'm', 'a'], JWT_exp=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinder.html#PathFinder.get_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinder.PathFinder.get_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate token for communication with PathFinder API.</p>
+<p>By defauly this code will try to figure out if a secure token is required.
+Behavior can be tuned via:</p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">secure</span></code> (~bool) - change to True or False to force secure/not-secure token.</dt>
+<dd>by default, None, which translate to auto-detect.</dd>
+<dt><code class="docutils literal"><span class="pre">returnResponse</span></code> (bool) - when True, return tuple of swagger response</dt>
+<dd>and <code class="xref py py-mod docutils literal"><span class="pre">requests</span></code> object.
+Default is False, which returns only swagger response.</dd>
+</dl>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="qe_modules.PathFinder.PathFinder.get_token_with_options">
+<em class="property">static </em><code class="descname">get_token_with_options</code><span class="sig-paren">(</span><em>JWT_alg='HS256', JWT_Header='Bearer %s', JWT_mac='This_is_a_Test_QED_MAC_Key_Which_Needs_to_be_at_Least_32_Bytes_Long', JWT_iss='default', JWT_sub='admin&#64;automation-pf03.qumu.media.com', JWT_aud='qed:default', JWT_qedp=['s', 'c', 'g', 'p', 'd', 'm', 'a'], JWT_exp=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinder.html#PathFinder.get_token_with_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinder.PathFinder.get_token_with_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combine Swagger client request options with JWT security options.</p>
+<p>This will result in swagger response tuple that contains both
+“regular” swagger response as well as the the
+undelying <code class="xref py py-mod docutils literal"><span class="pre">requests</span></code> object.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="qe_modules.PathFinder.PathFinder.request_options">
+<code class="descname">request_options</code><em class="property"> = {'also_return_response': True}</em><a class="headerlink" href="#qe_modules.PathFinder.PathFinder.request_options" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="qe_modules.PathFinder.PathFinderNotInitialized">
+<em class="property">exception </em><code class="descclassname">qe_modules.PathFinder.</code><code class="descname">PathFinderNotInitialized</code><span class="sig-paren">(</span><em>sut</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinder.html#PathFinderNotInitialized"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinder.PathFinderNotInitialized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/exceptions.html#exceptions.Exception" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></a></p>
+<p>PathFinder exception for non-initialized class.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="qe_modules.PathFinder.PathFinderSUT">
+<em class="property">class </em><code class="descclassname">qe_modules.PathFinder.</code><code class="descname">PathFinderSUT</code><span class="sig-paren">(</span><em>PF_Hudson='build2:8080'</em>, <em>PF_Branch='DeliveryService_1.3'</em>, <em>PF_Type='qed-server'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinder.html#PathFinderSUT"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinder.PathFinderSUT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>Helper class to deal with PathFinder SUT (System Under Test) upgrades.</p>
+<p>Class is initialized with the PathFinder IP address (or DNS entry).</p>
+<dl class="method">
+<dt id="qe_modules.PathFinder.PathFinderSUT.get_latest_successful_build">
+<code class="descname">get_latest_successful_build</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinder.html#PathFinderSUT.get_latest_successful_build"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinder.PathFinderSUT.get_latest_successful_build" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identify latest successful build on Jenkins.</p>
+<p>Jenkins configuration is determined in <em>qed_env.yml</em>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="qe_modules.PathFinder.PathFinderSUT.upgrade_PF">
+<code class="descname">upgrade_PF</code><span class="sig-paren">(</span><em>pfSUT</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinder.html#PathFinderSUT.upgrade_PF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinder.PathFinderSUT.upgrade_PF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upgrade PFE to latest successful version/build.</p>
+<p>Jenkins configuration is determined in <em>qed_env.yml</em>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pfSUT</strong> – PathFinder IP or DNS name to upgrade.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">UpgradeError.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="qe_modules.PathFinder.UpgradeError">
+<em class="property">exception </em><code class="descclassname">qe_modules.PathFinder.</code><code class="descname">UpgradeError</code><span class="sig-paren">(</span><em>sut</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinder.html#UpgradeError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinder.UpgradeError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/exceptions.html#exceptions.Exception" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></a></p>
+<p>Upgrade error exception.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="_static/qumu-logo-dark-2x.png" alt="Logo"/>
+    
+    <h1 class="logo logo-name">Qumu API Automation</h1>
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">qe modules</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">PathFinder module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PathFinderEdge.html">PathFinderEdge module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="conftest.html">conftest module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe_common.html">qe_common module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="functional.html">functional</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">qe modules</a><ul>
+      <li>Previous: <a href="modules.html" title="previous chapter">qe modules</a></li>
+      <li>Next: <a href="PathFinderEdge.html" title="next chapter">PathFinderEdge module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Qumu Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/PathFinder.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

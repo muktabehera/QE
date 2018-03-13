@@ -1,0 +1,48 @@
+1
+00:00:00,000 --> 00:00:30,000
+http://www.qumu.com
+
+2
+00:00:30,500 --> 00:01:00,000
+Test Captions
+Pattern 1 - normal text
+
+3
+00:01:00,500 --> 00:01:30,000
+Test Captions
+Pattern 2 - italics
+
+4
+00:01:30,500 --> 00:02:00,000
+Test Captions
+Pattern 3 - bold
+
+5
+00:02:00,500 --> 00:02:30,000
+Test Captions
+Pattern 4 - underline
+
+6
+00:02:30,500 --> 00:03:00,000
+Test Captions
+Pattern 5 - mixed
+
+7
+00:03:00,500 --> 00:03:30,000
+Test Captions
+Pattern 6 - colors
+
+8
+00:03:30,500 --> 00:03:40,000
+Test Captions
+Pattern 1 - back to normal
+
+9
+00:03:40,500 --> 00:04:00,000
+Test Captions
+... - in the next 30 seconds, captions should not show
+
+10
+00:04:30,500 --> 00:05:00,000
+Test Captions
+Pattern 1 - back to captions

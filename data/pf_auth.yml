@@ -1,0 +1,15 @@
+JWT_alg: HS256
+JWT_Header: "Bearer %s"
+JWT_mac: This_is_a_Test_QED_MAC_Key_Which_Needs_to_be_at_Least_32_Bytes_Long
+JWT_iss: default
+JWT_sub: admin@{}.com.format(PF_SUT_Name)
+JWT_aud: qed:default
+JWT_qedp:
+    - s
+    - c
+    - g
+    - p
+    - d
+    - m
+    - a
+JWT_exp: null

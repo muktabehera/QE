@@ -1,0 +1,24 @@
+videoEdgeHTTPService:
+    protocol: 'http'
+videoEdgeDeviceProperty:
+    proxyMode: "PROXY"
+    enableTokenAuthentication: False
+    restrictedBandwidthStart: 8
+    restrictedBandwidthEnd: 17
+    restrictedPeriodDownloadBandwidth: 100
+    nonRestrictedPeriodDownloadBandwidth: 500
+    enablePrepositioning: False
+    maximumDownloadTime: 54000
+    manifestRequestFrequency: 10
+videoEdgeDevice:
+    edgeDeviceRoles:
+        - ORIGIN
+        - DISTRIBUTION
+        - EDGE
+    visibleInAllConfigurations: False
+    deactivateReflectorService: False
+deliverySystem:
+    deliverySystemRoles:
+        - ORIGIN
+        - DISTRIBUTION
+        - EDGE

@@ -1,0 +1,284 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Introduction &#8212; Qumu API Automation 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+    <link rel="prev" title="Welcome to PathFinder (QED) API Automation’s documentation" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">This automation framework is for testing <strong>Qumu</strong> products via <a class="reference external" href="https://en.wikipedia.org/wiki/Representational_state_transfer/">RESTful</a> APIs.</div>
+</div>
+<p>The code is written in <a class="reference external" href="https://www.python.org">Python</a>.
+Python programming language introduction is available on <a class="reference external" href="https://confluence.qumu.com/display/auto/Python+Programming">Confluence</a>.
+Tutorials are also included in the Python installation, and are available on-line.</p>
+<div class="line-block">
+<div class="line">This framework is using <a class="reference external" href="https://docs.pytest.org/en/latest/">py.test</a> as the driving engine for the unit-test style tests.</div>
+<div class="line">It starts with PathFinder <a class="reference external" href="https://swagger.io/">Swagger</a>-based API, and could be extended to VCC and other projects.</div>
+<div class="line">Similarly, it can be extended to cover UI test automation.</div>
+</div>
+</div>
+<div class="section" id="tests-workflow">
+<h2>Tests Workflow<a class="headerlink" href="#tests-workflow" title="Permalink to this headline">¶</a></h2>
+<p>Basic automation framework start-up work-flow is:</p>
+<ul>
+<li><dl class="first docutils">
+<dt>Load System Under Test (SUT) environment configuration from <a class="reference external" href="https://en.wikipedia.org/wiki/YAML">YAML</a> files.</dt>
+<dd><ul class="first last">
+<li><p class="first"><strong>data/qed_env.yml</strong> - PathFinder, PFEs, Jenkins, common assets.</p>
+<p>See in-line comments in this YAML file for more details.</p>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">Connect to the PathFinder server, and download Swagger schema.</p>
+</li>
+<li><dl class="first docutils">
+<dt>Patch the schema, to fix known issues, and add missing/hidden features.</dt>
+<dd><ul class="first last simple">
+<li><strong>deliverySystems.diff.patch.json</strong> - defined in data/qed_env.yml (above).</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">Auto-generate API calls from Python client code.</p>
+</li>
+<li><p class="first">Run the tests, per <a class="reference external" href="https://docs.pytest.org/en/latest/usage.html">py.test command line options</a>.
+Notes:</p>
+<blockquote>
+<div><ul class="simple">
+<li>All tests should have multiple <a class="reference external" href="https://docs.pytest.org/en/latest/mark.html#mark">marks</a>, so they can be executed and filtered accordingly.</li>
+<li>Many tests require the <strong>init</strong> tag to initialize the tests, together with <em>functional/init_PF_test.py</em> and other setup test files.</li>
+</ul>
+</div></blockquote>
+<p>For example:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">py</span><span class="o">.</span><span class="n">test</span> <span class="o">-</span><span class="n">m</span> <span class="s2">&quot;init or upgrade&quot;</span> <span class="o">--</span><span class="n">disable</span><span class="o">-</span><span class="n">pytest</span><span class="o">-</span><span class="n">warnings</span> <span class="o">--</span><span class="n">disable</span><span class="o">-</span><span class="n">warnings</span> <span class="o">--</span><span class="n">alluredir</span> <span class="n">allure</span> <span class="o">-</span><span class="n">v</span> <span class="o">-</span><span class="n">s</span> <span class="n">functional</span><span class="o">/...</span>
+</pre></div>
+</div>
+<p>or using the helper script:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">run</span><span class="o">.</span><span class="n">sh</span> <span class="o">-</span><span class="n">m</span> <span class="s2">&quot;init or upgrade&quot;</span> <span class="n">functional</span><span class="o">/...</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="test-model">
+<h2>Test Model<a class="headerlink" href="#test-model" title="Permalink to this headline">¶</a></h2>
+<p>Test cases can be executed on a clean-upgrade environment, with no pre-existing configuration,
+or on an environment which has been configured with basic settings already
+(such as configuration and authentication settings).
+In some scenarios, test cases my rely on prior common configurations, such as audiences and PFE devices.
+In addition, it is desirable to have the capability to repeat only part of the tests,
+such as in the case of repeating only tests that failed in previous execution.</p>
+<p>In order to allow these framework use-cases, we keep a the environment settings
+in a common <a class="reference external" href="https://docs.pytest.org/en/latest/fixture.html">py.test fixture</a> called <strong>context</strong> (see <a class="reference internal" href="conftest.html#conftest.Context" title="conftest.Context"><code class="xref py py-class docutils literal"><span class="pre">conftest.Context</span></code></a> for latest details).</p>
+<p>The <strong>context</strong> fixture hierarchy is as follows:</p>
+<ul class="simple">
+<li><em>status</em> - <a class="reference external" href="https://github.com/cdgriffith/Box">Box</a> with test status details. Example, flags for PF &amp; PFE clean upgrades.</li>
+<li><em>config</em> - <a class="reference external" href="https://github.com/cdgriffith/Box">Box</a> object from <em>data/qed_env.yml</em>.</li>
+<li><em>data</em> - <a class="reference external" href="https://github.com/cdgriffith/Box">Box</a> holding data for driving different test cases,
+as generated by the different test scripts.</li>
+<li><dl class="first docutils">
+<dt><em>pf</em> - PathFinder class instance for PathFinder system under test.</dt>
+<dd><ul class="first last">
+<li><em>pf.spec</em> - Swagger spec retrieved from PathFinder SUT, possibly patched.</li>
+<li><em>pf.schema</em> - Swagger schema object retrieved from PathFinder SUT / spec.</li>
+<li><em>pf.cl</em> - <a class="reference external" href="http://bravado.readthedocs.io/en/latest/index.html">Swagger client</a> instance, to make PathFinder RESTful calls.</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><em>cl</em> - shorthand link to <em>pf.cl</em>.</li>
+<li><em>sc</em> - shorthand link to <em>pf.schema</em>.</li>
+<li><em>PF</em> - common access to <a class="reference internal" href="PathFinder.html#module-PathFinder" title="PathFinder"><code class="xref py py-meth docutils literal"><span class="pre">PathFinder()</span></code></a> module.</li>
+<li><em>PFE</em> - common access to <code class="xref py py-meth docutils literal"><span class="pre">PathFinderEdge()</span></code> module.</li>
+<li><em>logger</em> - common <a class="reference external" href="https://docs.python.org/2/library/logging.html#module-logging" title="(in Python v2.7)"><code class="xref py py-mod docutils literal"><span class="pre">logging</span></code></a> module.</li>
+<li><em>faker</em> - common <a class="reference external" href="http://faker.readthedocs.io/en/master/">fake-data</a> generator.</li>
+</ul>
+</div>
+<div class="section" id="folders-hierarchy">
+<h2>Folders Hierarchy<a class="headerlink" href="#folders-hierarchy" title="Permalink to this headline">¶</a></h2>
+<p>Top folder structure:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="47%" />
+<col width="53%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Folder</th>
+<th class="head">Content</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>allure</td>
+<td>allure configurtion and raw results</td>
+</tr>
+<tr class="row-odd"><td>allure-report</td>
+<td>allure report</td>
+</tr>
+<tr class="row-even"><td>bravado-patch</td>
+<td>patch files for bravado</td>
+</tr>
+<tr class="row-odd"><td>conftest.py</td>
+<td>py.test configuration</td>
+</tr>
+<tr class="row-even"><td>content</td>
+<td>media and content for tests</td>
+</tr>
+<tr class="row-odd"><td>data</td>
+<td>data files for tests</td>
+</tr>
+<tr class="row-even"><td>docs</td>
+<td>project documentation</td>
+</tr>
+<tr class="row-odd"><td>feature</td>
+<td>BDD tests</td>
+</tr>
+<tr class="row-even"><td>functional</td>
+<td>py.test tests</td>
+</tr>
+<tr class="row-odd"><td>model</td>
+<td>model tests</td>
+</tr>
+<tr class="row-even"><td>notebooks</td>
+<td>place for notebooks</td>
+</tr>
+<tr class="row-odd"><td>pytest.ini</td>
+<td>py.test configuration</td>
+</tr>
+<tr class="row-even"><td>qe_common.py</td>
+<td>common qe code</td>
+</tr>
+<tr class="row-odd"><td>qe_modules</td>
+<td>QE modules</td>
+</tr>
+<tr class="row-even"><td>requirements.txt</td>
+<td>project installation</td>
+</tr>
+<tr class="row-odd"><td>run.sh</td>
+<td>sample execution command-line</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="_static/qumu-logo-dark-2x.png" alt="Logo"/>
+    
+    <h1 class="logo logo-name">Qumu API Automation</h1>
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tests-workflow">Tests Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#test-model">Test Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#folders-hierarchy">Folders Hierarchy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#setup-sut-components">Setup SUT Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#configure-sut-components">Configure SUT Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">qe modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="functional.html">functional</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to PathFinder (QED) API Automation’s documentation</a></li>
+      <li>Next: <a href="installation.html" title="next chapter">Installation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Qumu Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/intro.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

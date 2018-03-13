@@ -1,0 +1,188 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>PathFinderEdge module &#8212; Qumu API Automation 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="conftest module" href="conftest.html" />
+    <link rel="prev" title="PathFinder module" href="PathFinder.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-qe_modules.PathFinderEdge">
+<span id="pathfinderedge-module"></span><h1>PathFinderEdge module<a class="headerlink" href="#module-qe_modules.PathFinderEdge" title="Permalink to this headline">¶</a></h1>
+<p>PFE / VNE remote control, upgrade, and register</p>
+<dl class="class">
+<dt id="qe_modules.PathFinderEdge.PathFinderEdge">
+<em class="property">class </em><code class="descclassname">qe_modules.PathFinderEdge.</code><code class="descname">PathFinderEdge</code><span class="sig-paren">(</span><em>PFE_Hudson='build2:8080'</em>, <em>PFE_Branch='VNEX_8.0'</em>, <em>PFE_Type='qumu-videonet-edge-centos'</em>, <em>PFE_Installation_Name='qumu-videonet-edge-centos.noarch'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinderEdge.html#PathFinderEdge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinderEdge.PathFinderEdge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>Helper class to deal with PFE upgrades.</p>
+<dl class="method">
+<dt id="qe_modules.PathFinderEdge.PathFinderEdge.get_latest_successful_build">
+<code class="descname">get_latest_successful_build</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinderEdge.html#PathFinderEdge.get_latest_successful_build"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinderEdge.PathFinderEdge.get_latest_successful_build" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identify latest successful build on Jekins.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="qe_modules.PathFinderEdge.PathFinderEdge.register_PFE">
+<code class="descname">register_PFE</code><span class="sig-paren">(</span><em>QED_Name</em>, <em>PFE_IP</em>, <em>regToken</em>, <em>PFE_user</em>, <em>PFE_password</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinderEdge.html#PathFinderEdge.register_PFE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinderEdge.PathFinderEdge.register_PFE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register PFE device with PathFInder.</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">QED_Name</span></code> - DNS / IP of the PathFidner Server.</li>
+<li><code class="docutils literal"><span class="pre">PFE_IP</span></code> - address of the PathFinderEndge to register.</li>
+<li><code class="docutils literal"><span class="pre">regToken</span></code> - token received from PathFinder for registering the PFE.</li>
+<li><code class="docutils literal"><span class="pre">PFE_User</span></code> &amp; <code class="docutils literal"><span class="pre">PFE_password</span></code> - user credentials to the PFE.</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>QED_Name</strong> (<em>str.</em>) – DNS / IP of the PathFidner Server.</li>
+<li><strong>PFE_IP</strong> (<em>str.</em>) – address of the PathFinderEndge to register.</li>
+<li><strong>regToken</strong> (<em>str.</em>) – token received from PathFinder for registering the PFE.</li>
+<li><strong>PFE_User</strong> (<em>str.</em>) – user credentials to the PFE.</li>
+<li><strong>PFE_password</strong> (<em>str.</em>) – user credentials to the PFE.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">bool – registration response status (.ok).</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">UpgradeError</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="qe_modules.PathFinderEdge.PathFinderEdge.upgrade_PFE">
+<code class="descname">upgrade_PFE</code><span class="sig-paren">(</span><em>PFE_IP</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinderEdge.html#PathFinderEdge.upgrade_PFE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinderEdge.PathFinderEdge.upgrade_PFE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upgrade PFE to latest successful version.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="qe_modules.PathFinderEdge.UpgradeError">
+<em class="property">exception </em><code class="descclassname">qe_modules.PathFinderEdge.</code><code class="descname">UpgradeError</code><span class="sig-paren">(</span><em>sut</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/qe_modules/PathFinderEdge.html#UpgradeError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#qe_modules.PathFinderEdge.UpgradeError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></p>
+<p>Upgrade error exception.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="_static/qumu-logo-dark-2x.png" alt="Logo"/>
+    
+    <h1 class="logo logo-name">Qumu API Automation</h1>
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#setup-sut-components">Setup SUT Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html#configure-sut-components">Configure SUT Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">qe modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="PathFinder.html">PathFinder module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">PathFinderEdge module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="conftest.html">conftest module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe_common.html">qe_common module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="functional.html">functional</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">qe modules</a><ul>
+      <li>Previous: <a href="PathFinder.html" title="previous chapter">PathFinder module</a></li>
+      <li>Next: <a href="conftest.html" title="next chapter">conftest module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Qumu Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/PathFinderEdge.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

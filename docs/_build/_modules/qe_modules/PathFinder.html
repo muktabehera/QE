@@ -1,0 +1,622 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>qe_modules.PathFinder &#8212; Qumu API Automation 1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for qe_modules.PathFinder</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. module:: PathFinder</span>
+
+<span class="sd">PathFinder module for handling remote control, upgrade, and RESTful API communication.</span>
+
+<span class="sd">* ``Schema`` class is holding the Swagger schema retrieved from the PathFinder server, with potential patches to the schema.</span>
+<span class="sd">* ``PathFinderSUT`` class is for hadnling PathFinder upgrades.</span>
+<span class="sd">* ``PathFinder`` class wrapps the RESTful / Swagger API calls to the PathFinder server under test.</span>
+
+<span class="sd">All objects are having sane defaults, to allow easy usage in San-Bruno lab environment.</span>
+<span class="sd">This means that in SB lab, calling most functions should &quot;just work&quot; as-is,</span>
+<span class="sd">but porper configuration variables should be applied elsewhere.</span>
+<span class="sd">Please see below for more details.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># from attrdict import AttrDict</span>
+<span class="kn">from</span> <span class="nn">box</span> <span class="k">import</span> <span class="n">Box</span>
+<span class="kn">from</span> <span class="nn">bravado.client</span> <span class="k">import</span> <span class="n">SwaggerClient</span>
+<span class="kn">from</span> <span class="nn">bravado.exception</span> <span class="k">import</span> <span class="n">HTTPForbidden</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">timedelta</span>
+<span class="c1"># from calendar import timegm</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">jwt</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="c1"># import logging.handlers</span>
+<span class="kn">from</span> <span class="nn">plumbum</span> <span class="k">import</span> <span class="n">ProcessExecutionError</span>
+<span class="kn">from</span> <span class="nn">plumbum</span> <span class="k">import</span> <span class="n">SshMachine</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">requests.auth</span> <span class="k">import</span> <span class="n">HTTPBasicAuth</span>
+<span class="kn">from</span> <span class="nn">rpyc.utils.zerodeploy</span> <span class="k">import</span> <span class="n">DeployedServer</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">from</span> <span class="nn">qe_common</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="k">global</span> <span class="n">PF_SUT</span><span class="p">,</span> <span class="n">PF_Hudson</span><span class="p">,</span> <span class="n">PF_Branch</span><span class="p">,</span> <span class="n">PF_Type</span>
+
+<span class="n">PF_SUT</span> <span class="o">=</span> <span class="s1">&#39;172.30.5.153&#39;</span>
+<span class="n">PF_SUT_Name</span> <span class="o">=</span> <span class="s1">&#39;automation-pf03.qumu.media&#39;</span>
+<span class="n">PF_Hudson</span> <span class="o">=</span> <span class="s1">&#39;build2:8080&#39;</span>
+<span class="n">PF_Branch</span> <span class="o">=</span> <span class="s1">&#39;DeliveryService_1.3&#39;</span>
+<span class="n">PF_Type</span> <span class="o">=</span> <span class="s1">&#39;qed-server&#39;</span>
+
+<span class="c1"># Set logging level:</span>
+<span class="c1"># DEBUG will show also plumbum logs</span>
+<span class="c1"># INFO for local debugging</span>
+<span class="c1"># ERROR for production environment</span>
+<span class="n">DEBUG_LEVEL</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span>  <span class="c1"># &#39;CRITICAL&#39;, &#39;DEBUG&#39;, &#39;ERROR&#39;, &#39;FATAL&#39;, &#39;INFO&#39;</span>
+
+<span class="c1"># Logger configuration</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">DEBUG_LEVEL</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="c1"># Uncomment for remote syslog:</span>
+<span class="c1"># handler = logging.handlers.SysLogHandler(address=(helperServer, 514))</span>
+<span class="c1"># logger.addHandler(handler)</span>
+
+
+<div class="viewcode-block" id="UpgradeError"><a class="viewcode-back" href="../../PathFinder.html#qe_modules.PathFinder.UpgradeError">[docs]</a><span class="k">class</span> <span class="nc">UpgradeError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Upgrade error exception.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sut</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;SUT is the system under test failing to upgrade.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sut</span> <span class="o">=</span> <span class="n">sut</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Failed to upgrade SUT.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sut</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PathFinderNotInitialized"><a class="viewcode-back" href="../../PathFinder.html#qe_modules.PathFinder.PathFinderNotInitialized">[docs]</a><span class="k">class</span> <span class="nc">PathFinderNotInitialized</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;PathFinder exception for non-initialized class.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sut</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;PathFinder under test should be initialized (retreive schema from PF).&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sut</span> <span class="o">=</span> <span class="n">sut</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;PathFinder under test should be initialized (retreive schema from PF).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sut</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PathFinderSUT"><a class="viewcode-back" href="../../PathFinder.html#qe_modules.PathFinder.PathFinderSUT">[docs]</a><span class="k">class</span> <span class="nc">PathFinderSUT</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Helper class to deal with PathFinder SUT (System Under Test) upgrades.</span>
+
+<span class="sd">    Class is initialized with the PathFinder IP address (or DNS entry).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">PF_Hudson</span><span class="o">=</span><span class="n">PF_Hudson</span><span class="p">,</span>
+                 <span class="n">PF_Branch</span><span class="o">=</span><span class="n">PF_Branch</span><span class="p">,</span>
+                 <span class="n">PF_Type</span><span class="o">=</span><span class="n">PF_Type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sane default values.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PF_Hudson</span> <span class="o">=</span> <span class="n">PF_Hudson</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PF_Branch</span> <span class="o">=</span> <span class="n">PF_Branch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PF_Type</span> <span class="o">=</span> <span class="n">PF_Type</span>
+        <span class="c1"># Extra time to wait for PF service:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PF_ShutDown_Delay</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># seconds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PF_StartUp_Delay</span> <span class="o">=</span> <span class="mi">30</span>  <span class="c1"># seconds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">latestBuildNumber</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="PathFinderSUT.get_latest_successful_build"><a class="viewcode-back" href="../../PathFinder.html#qe_modules.PathFinder.PathFinderSUT.get_latest_successful_build">[docs]</a>    <span class="k">def</span> <span class="nf">get_latest_successful_build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Identify latest successful build on Jenkins.</span>
+
+<span class="sd">        Jenkins configuration is determined in *data/qed_env.yml*.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">latestBuild</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;http://</span><span class="si">{}</span><span class="s1">/hudson/job/</span><span class="si">{}</span><span class="s1">/lastSuccessfulBuild/api/json&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PF_Hudson</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PF_Branch</span><span class="p">))</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Latest PF build: </span><span class="si">{}</span><span class="s1"> &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">latestBuild</span><span class="p">[</span><span class="s1">&#39;fullDisplayName&#39;</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">latestBuildNumber</span> <span class="o">=</span> <span class="n">latestBuild</span><span class="p">[</span><span class="s1">&#39;number&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">artifact</span> <span class="ow">in</span> <span class="n">latestBuild</span><span class="p">[</span><span class="s1">&#39;artifacts&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">artifact</span><span class="p">[</span><span class="s1">&#39;fileName&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PF_Type</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">PF_fileName</span> <span class="o">=</span> <span class="n">artifact</span><span class="p">[</span><span class="s1">&#39;fileName&#39;</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">relativePath</span> <span class="o">=</span> <span class="n">artifact</span><span class="p">[</span><span class="s1">&#39;relativePath&#39;</span><span class="p">]</span>
+                <span class="k">break</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PF_download_path</span> <span class="o">=</span> <span class="s1">&#39;http://</span><span class="si">{}</span><span class="s1">/hudson/job/</span><span class="si">{}</span><span class="s1">/lastSuccessfulBuild/artifact/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PF_Hudson</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PF_Branch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">relativePath</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PF_download_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PF_Branch</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">latestBuildNumber</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">latestBuildNumber</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PF_fileName</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PF_download_path</span></div>
+
+<div class="viewcode-block" id="PathFinderSUT.upgrade_PF"><a class="viewcode-back" href="../../PathFinder.html#qe_modules.PathFinder.PathFinderSUT.upgrade_PF">[docs]</a>    <span class="k">def</span> <span class="nf">upgrade_PF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pfSUT</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Upgrade PFE to latest successful version/build.</span>
+
+<span class="sd">        Jenkins configuration is determined in *data/qed_env.yml*.</span>
+
+<span class="sd">        :param pfSUT: PathFinder IP or DNS name to upgrade.</span>
+<span class="sd">        :type name: str.</span>
+<span class="sd">        :raises: UpgradeError.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">latestBuildNumber</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_latest_successful_build</span><span class="p">()</span>
+
+        <span class="c1"># Connect to remote PF server as user1</span>
+        <span class="c1"># Requires destination to be set with SSH key</span>
+        <span class="n">pf_u</span> <span class="o">=</span> <span class="n">SshMachine</span><span class="p">(</span><span class="n">pfSUT</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="s2">&quot;user1&quot;</span><span class="p">)</span>
+        <span class="n">server_u</span> <span class="o">=</span> <span class="n">DeployedServer</span><span class="p">(</span><span class="n">pf_u</span><span class="p">)</span>
+        <span class="c1"># conn_u = server_u.classic_connect()</span>
+
+        <span class="c1"># Access remote commands</span>
+        <span class="c1"># require update to /etc/sudoers:</span>
+        <span class="c1"># %sudo   ALL=(ALL:ALL) NOPASSWD: ALL</span>
+        <span class="n">pf_sudo</span> <span class="o">=</span> <span class="n">pf_u</span><span class="p">[</span><span class="s2">&quot;sudo&quot;</span><span class="p">]</span>
+        <span class="n">pf_service</span> <span class="o">=</span> <span class="n">pf_u</span><span class="p">[</span><span class="s2">&quot;service&quot;</span><span class="p">]</span>
+        <span class="n">pf_mysql</span> <span class="o">=</span> <span class="n">pf_u</span><span class="p">[</span><span class="s2">&quot;mysql&quot;</span><span class="p">]</span>
+        <span class="c1"># pfe_systemctl = pf_u[&quot;systemctl&quot;]</span>
+        <span class="c1"># pfe_yum = pf_u[&quot;yum&quot;]</span>
+        <span class="c1"># pfe_rpm = pf_u[&quot;rpm&quot;]</span>
+        <span class="n">pf_curl</span> <span class="o">=</span> <span class="n">pf_u</span><span class="p">[</span><span class="s2">&quot;curl&quot;</span><span class="p">]</span>
+        <span class="n">pf_ps</span> <span class="o">=</span> <span class="n">pf_u</span><span class="p">[</span><span class="s2">&quot;ps&quot;</span><span class="p">]</span>
+        <span class="n">pf_grep</span> <span class="o">=</span> <span class="n">pf_u</span><span class="p">[</span><span class="s2">&quot;grep&quot;</span><span class="p">]</span>
+        <span class="n">pf_wc</span> <span class="o">=</span> <span class="n">pf_u</span><span class="p">[</span><span class="s2">&quot;wc&quot;</span><span class="p">]</span>
+        <span class="n">pf_rm</span> <span class="o">=</span> <span class="n">pf_u</span><span class="p">[</span><span class="s2">&quot;rm&quot;</span><span class="p">]</span>
+        <span class="n">pf_jar</span> <span class="o">=</span> <span class="n">pf_u</span><span class="p">[</span><span class="s1">&#39;/usr/local/qed/jre/bin/jar&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Get latest PF code</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Updating PF at: &quot;</span> <span class="o">+</span> <span class="n">pfSUT</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">pf_process_up</span><span class="p">():</span>
+            <span class="sd">&quot;&quot;&quot;Check if PathFinder process is running on the remote server.&quot;&quot;&quot;</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">pf_ps</span><span class="p">[</span><span class="s1">&#39;xfaw&#39;</span><span class="p">]</span> <span class="o">|</span> <span class="n">pf_grep</span><span class="p">[</span><span class="s1">&#39;qed/server&#39;</span><span class="p">]</span> <span class="o">|</span>
+                         <span class="n">pf_grep</span><span class="p">[</span><span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="s1">&#39;grep&#39;</span><span class="p">]</span> <span class="o">|</span> <span class="n">pf_wc</span><span class="p">[</span><span class="s1">&#39;-l&#39;</span><span class="p">])())</span>
+                <span class="k">return</span> <span class="n">c</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+            <span class="k">except</span> <span class="n">ProcessExecutionError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Stop PF</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Stopping PF service: &quot;</span> <span class="o">+</span>
+                    <span class="n">pf_sudo</span><span class="p">[</span><span class="n">pf_service</span><span class="p">[</span><span class="s2">&quot;qed&quot;</span><span class="p">,</span> <span class="s2">&quot;stop&quot;</span><span class="p">]]())</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PF_ShutDown_Delay</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pf_process_up</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;Failed to stop PF process at </span><span class="si">{}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pfSUT</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="n">UpgradeError</span><span class="p">(</span>
+                <span class="s2">&quot;Failed to stop PF process at </span><span class="si">{}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">PF_IP</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="ow">not</span><span class="p">(</span><span class="n">pf_process_up</span><span class="p">()))</span>
+
+        <span class="c1"># Download latest successful build</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Delete old downloads: &quot;</span> <span class="o">+</span>
+                    <span class="n">pf_rm</span><span class="p">[</span><span class="s1">&#39;-rf&#39;</span><span class="p">,</span> <span class="s1">&#39;/tmp/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PF_Type</span><span class="p">)]())</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Download latest PF build: &quot;</span> <span class="o">+</span>
+                    <span class="n">pf_curl</span><span class="p">[</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="s1">&#39;/tmp/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PF_fileName</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">PF_download_path</span><span class="p">]())</span>
+        <span class="c1"># TODO(): Check download was successful</span>
+        <span class="c1"># Remove previous PF version</span>
+        <span class="k">with</span> <span class="n">pf_u</span><span class="o">.</span><span class="n">cwd</span><span class="p">(</span><span class="s1">&#39;/usr/local/qed/base/webapps/ROOT&#39;</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Remove previous version: &quot;</span> <span class="o">+</span>
+                        <span class="n">pf_sudo</span><span class="p">[</span><span class="n">pf_rm</span><span class="p">[</span><span class="s1">&#39;-rf&#39;</span><span class="p">,</span> <span class="s1">&#39;com&#39;</span><span class="p">,</span> <span class="s1">&#39;content&#39;</span><span class="p">,</span> <span class="s1">&#39;META-INF&#39;</span><span class="p">,</span> <span class="s1">&#39;WEB-INF&#39;</span><span class="p">]]())</span>
+        <span class="c1"># Extract new PF version</span>
+        <span class="k">with</span> <span class="n">pf_u</span><span class="o">.</span><span class="n">cwd</span><span class="p">(</span><span class="s1">&#39;/usr/local/qed/base/webapps/ROOT&#39;</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Extract PF build #</span><span class="si">{}</span><span class="s2">:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">latestBuildNumber</span><span class="p">)</span> <span class="o">+</span>
+                        <span class="n">pf_sudo</span><span class="p">[</span><span class="n">pf_jar</span><span class="p">[</span><span class="s1">&#39;-xvf&#39;</span><span class="p">,</span> <span class="s1">&#39;/tmp/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PF_fileName</span><span class="p">)]]())</span>
+
+        <span class="c1"># mysql - drop and create PF database</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Re-create PF database: &quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Available DBs before drop:</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span>
+                    <span class="n">pf_mysql</span><span class="p">[</span><span class="s2">&quot;--user=qed&quot;</span><span class="p">,</span> <span class="s2">&quot;--password=qed&quot;</span><span class="p">,</span> <span class="s2">&quot;-e show databases;&quot;</span><span class="p">]())</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Drop PF DB: &quot;</span> <span class="o">+</span> <span class="n">pf_mysql</span><span class="p">[</span><span class="s2">&quot;--user=qed&quot;</span><span class="p">,</span> <span class="s2">&quot;--password=qed&quot;</span><span class="p">,</span> <span class="s2">&quot;-e drop database qed;&quot;</span><span class="p">]())</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Available DBs after drop:</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span>
+                    <span class="n">pf_mysql</span><span class="p">[</span><span class="s2">&quot;--user=qed&quot;</span><span class="p">,</span> <span class="s2">&quot;--password=qed&quot;</span><span class="p">,</span> <span class="s2">&quot;-e show databases;&quot;</span><span class="p">]())</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Create PF DB: &quot;</span> <span class="o">+</span>
+                     <span class="n">pf_mysql</span><span class="p">[</span><span class="s2">&quot;--user=qed&quot;</span><span class="p">,</span> <span class="s2">&quot;--password=qed&quot;</span><span class="p">,</span> <span class="s2">&quot;-e create database qed;&quot;</span><span class="p">]())</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Available DBs after creating new:</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span>
+                    <span class="n">pf_mysql</span><span class="p">[</span><span class="s2">&quot;--user=qed&quot;</span><span class="p">,</span> <span class="s2">&quot;--password=qed&quot;</span><span class="p">,</span> <span class="s2">&quot;-e show databases;&quot;</span><span class="p">]())</span>
+
+        <span class="c1"># Start PF and wait</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting PF service: &quot;</span> <span class="o">+</span>
+                    <span class="n">pf_sudo</span><span class="p">[</span><span class="n">pf_service</span><span class="p">[</span><span class="s2">&quot;qed&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">]]())</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PF_StartUp_Delay</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pf_process_up</span><span class="p">():</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PF_StartUp_Delay</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">pf_process_up</span><span class="p">():</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span>
+                    <span class="s2">&quot;Failed to start PF process at </span><span class="si">{}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pfSUT</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">UpgradeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Failed to start PF process at </span><span class="si">{}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">PF_IP</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">pf_process_up</span><span class="p">())</span>
+
+        <span class="c1"># Clean-up</span>
+        <span class="n">server_u</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Done.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span></div></div>
+
+
+<div class="viewcode-block" id="PathFinder"><a class="viewcode-back" href="../../PathFinder.html#qe_modules.PathFinder.PathFinder">[docs]</a><span class="k">class</span> <span class="nc">PathFinder</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;PathFinder Swagger client, with support for JWT authentication.</span>
+
+<span class="sd">    *get_token* and *get_token_with_options* are provided as statuc methods,</span>
+<span class="sd">    and do not require class instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">request_options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;also_return_response&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">empty_options</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">host</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_alg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_Header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_mac</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_iss</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_sub</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_aud</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_qedp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_exp</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize PathFInder schema schema.</span>
+
+<span class="sd">        ``host`` (string) -  PathFinder server IP or DNS entry. Use of IP is recommended.</span>
+<span class="sd">        ``JWT_*`` (string) - PathFinder authorization configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">=</span> <span class="n">Box</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pfLocked</span> <span class="o">=</span> <span class="kc">False</span>   <span class="c1"># whetner PF auth was locked.</span>
+        <span class="c1"># TODO(Keep last secure token, to save calculation)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lastToken</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">JWT_mac</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_alg</span> <span class="o">=</span> <span class="n">JWT_alg</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_Header</span> <span class="o">=</span> <span class="n">JWT_Header</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_mac</span> <span class="o">=</span> <span class="n">JWT_mac</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_iss</span> <span class="o">=</span> <span class="n">JWT_iss</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_sub</span> <span class="o">=</span> <span class="n">JWT_sub</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_aud</span> <span class="o">=</span> <span class="n">JWT_aud</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_qedp</span> <span class="o">=</span> <span class="n">JWT_qedp</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_exp</span> <span class="o">=</span> <span class="n">JWT_exp</span>
+        <span class="k">return</span>
+
+<div class="viewcode-block" id="PathFinder.get_secure_token"><a class="viewcode-back" href="../../PathFinder.html#qe_modules.PathFinder.PathFinder.get_secure_token">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_secure_token</span><span class="p">(</span>
+            <span class="n">JWT_alg</span><span class="o">=</span><span class="s1">&#39;HS256&#39;</span><span class="p">,</span>
+            <span class="n">JWT_Header</span><span class="o">=</span><span class="s1">&#39;Bearer </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="n">JWT_mac</span><span class="o">=</span><span class="s1">&#39;This_is_a_Test_QED_MAC_Key_Which_Needs_to_be_at_Least_32_Bytes_Long&#39;</span><span class="p">,</span>
+            <span class="n">JWT_iss</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span>
+            <span class="n">JWT_sub</span><span class="o">=</span><span class="s1">&#39;admin@</span><span class="si">{}</span><span class="s1">.com&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">PF_SUT_Name</span><span class="p">),</span>
+            <span class="n">JWT_aud</span><span class="o">=</span><span class="s1">&#39;qed:default&#39;</span><span class="p">,</span>
+            <span class="n">JWT_qedp</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">],</span>
+            <span class="n">JWT_exp</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate JWT header token for communication with PathFinder API.&quot;&quot;&quot;</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">payload</span><span class="p">[</span><span class="s1">&#39;iss&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">JWT_iss</span>
+        <span class="n">payload</span><span class="p">[</span><span class="s1">&#39;sub&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">JWT_sub</span>
+        <span class="n">payload</span><span class="p">[</span><span class="s1">&#39;aud&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">JWT_aud</span>
+        <span class="n">payload</span><span class="p">[</span><span class="s1">&#39;qedp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">JWT_qedp</span>
+        <span class="k">if</span> <span class="n">JWT_exp</span><span class="p">:</span>
+            <span class="n">payload</span><span class="p">[</span><span class="s1">&#39;exp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">JWT_exp</span><span class="p">))</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="n">jwt</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">JWT_mac</span><span class="p">,</span> <span class="n">JWT_alg</span><span class="p">)</span>
+        <span class="n">request_headers_name</span> <span class="o">=</span> <span class="s1">&#39;Authorization&#39;</span>
+        <span class="n">request_header_payload</span> <span class="o">=</span> <span class="n">JWT_Header</span> <span class="o">%</span> <span class="n">token</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
+        <span class="n">request_headers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="n">request_headers_name</span><span class="p">:</span> <span class="n">request_header_payload</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">request_headers</span><span class="p">[</span><span class="s2">&quot;headers&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">})</span>
+        <span class="c1"># return request_headers_name, request_header_payload</span>
+        <span class="k">return</span> <span class="n">request_headers</span></div>
+
+<div class="viewcode-block" id="PathFinder.get_token_with_options"><a class="viewcode-back" href="../../PathFinder.html#qe_modules.PathFinder.PathFinder.get_token_with_options">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_token_with_options</span><span class="p">(</span>
+            <span class="n">JWT_alg</span><span class="o">=</span><span class="s1">&#39;HS256&#39;</span><span class="p">,</span>
+            <span class="n">JWT_Header</span><span class="o">=</span><span class="s1">&#39;Bearer </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="n">JWT_mac</span><span class="o">=</span><span class="s1">&#39;This_is_a_Test_QED_MAC_Key_Which_Needs_to_be_at_Least_32_Bytes_Long&#39;</span><span class="p">,</span>
+            <span class="n">JWT_iss</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span>
+            <span class="n">JWT_sub</span><span class="o">=</span><span class="s1">&#39;admin@</span><span class="si">{}</span><span class="s1">.com&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">PF_SUT_Name</span><span class="p">),</span>
+            <span class="n">JWT_aud</span><span class="o">=</span><span class="s1">&#39;qed:default&#39;</span><span class="p">,</span>
+            <span class="n">JWT_qedp</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">],</span>
+            <span class="n">JWT_exp</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Combine Swagger client request options with JWT security options.</span>
+
+<span class="sd">        This will result in swagger response tuple that contains both</span>
+<span class="sd">        &quot;regular&quot; swagger response as well as the the</span>
+<span class="sd">        undelying :mod:`requests` object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jwt_request_header</span> <span class="o">=</span> <span class="n">PathFinder</span><span class="o">.</span><span class="n">get_secure_token</span><span class="p">(</span>
+            <span class="n">JWT_alg</span><span class="o">=</span><span class="n">JWT_alg</span><span class="p">,</span>
+            <span class="n">JWT_Header</span><span class="o">=</span><span class="n">JWT_Header</span><span class="p">,</span>
+            <span class="n">JWT_mac</span><span class="o">=</span><span class="n">JWT_mac</span><span class="p">,</span>
+            <span class="n">JWT_iss</span><span class="o">=</span><span class="n">JWT_iss</span><span class="p">,</span>
+            <span class="n">JWT_sub</span><span class="o">=</span><span class="n">JWT_sub</span><span class="p">,</span>
+            <span class="n">JWT_aud</span><span class="o">=</span><span class="n">JWT_aud</span><span class="p">,</span>
+            <span class="n">JWT_qedp</span><span class="o">=</span><span class="n">JWT_qedp</span><span class="p">,</span>
+            <span class="n">JWT_exp</span><span class="o">=</span><span class="n">JWT_exp</span>
+        <span class="p">)</span>
+        <span class="n">secure_request_options</span> <span class="o">=</span> <span class="n">PathFinder</span><span class="o">.</span><span class="n">request_options</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">secure_request_options</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">jwt_request_header</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">secure_request_options</span></div>
+
+<div class="viewcode-block" id="PathFinder.get_token"><a class="viewcode-back" href="../../PathFinder.html#qe_modules.PathFinder.PathFinder.get_token">[docs]</a>    <span class="k">def</span> <span class="nf">get_token</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">secure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">returnResponse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">JWT_alg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_Header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_mac</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_iss</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_sub</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_aud</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_qedp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">JWT_exp</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate token for communication with PathFinder API.</span>
+
+<span class="sd">           By defauly this code will try to figure out if a secure token is required.</span>
+<span class="sd">           Behavior can be tuned via:</span>
+
+<span class="sd">           ``secure`` (~bool) - change to True or False to force secure/not-secure token.</span>
+<span class="sd">                                by default, None, which translate to auto-detect.</span>
+
+<span class="sd">           ``returnResponse`` (bool) - when True, return tuple of swagger response</span>
+<span class="sd">                                       and :mod:`requests` object.</span>
+<span class="sd">                                       Default is False, which returns only swagger response.</span>
+
+<span class="sd">           ``JWT_*`` (string) - Update PathFinder authorization configuration.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">JWT_mac</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_mac</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">PathFinderNotInitialized</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_alg</span> <span class="o">=</span> <span class="n">JWT_alg</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_Header</span> <span class="o">=</span> <span class="n">JWT_Header</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_mac</span> <span class="o">=</span> <span class="n">JWT_mac</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_iss</span> <span class="o">=</span> <span class="n">JWT_iss</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_sub</span> <span class="o">=</span> <span class="n">JWT_sub</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_aud</span> <span class="o">=</span> <span class="n">JWT_aud</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_qedp</span> <span class="o">=</span> <span class="n">JWT_qedp</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">JWT_exp</span> <span class="o">=</span> <span class="n">JWT_exp</span>
+        <span class="k">if</span> <span class="n">secure</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="sd">&quot;&quot;&quot;Check if PF is locked already or not.&quot;&quot;&quot;</span>
+            <span class="n">settings</span> <span class="o">=</span> <span class="n">Box</span><span class="p">()</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">configured</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl</span><span class="o">.</span><span class="n">Settings</span><span class="o">.</span><span class="n">getSettings</span><span class="p">()</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">HTTPForbidden</span><span class="p">:</span>
+                <span class="n">settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl</span><span class="o">.</span><span class="n">Settings</span><span class="o">.</span><span class="n">getSettings</span><span class="p">(</span>
+                    <span class="n">_request_options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_secure_token</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">JWT_alg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_Header</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_mac</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">JWT_iss</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_aud</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_qedp</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">JWT_exp</span><span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pfLocked</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">PathFinderNotInitialized</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">configured</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pfLocked</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">elif</span> <span class="n">settings</span><span class="o">.</span><span class="n">configured</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pfLocked</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                        <span class="s2">&quot;Unexpected Condition - cannot get settings from PF.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pfLocked</span><span class="p">:</span>
+                <span class="n">secure</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">secure</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">secure</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">returnResponse</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_token_with_options</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">JWT_alg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_Header</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_mac</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_iss</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">JWT_sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_aud</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_qedp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_exp</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secure_token</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">JWT_alg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_Header</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_mac</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_iss</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">JWT_sub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_aud</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_qedp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">JWT_exp</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">secure</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">returnResponse</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">PathFinder</span><span class="o">.</span><span class="n">request_options</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">PathFinder</span><span class="o">.</span><span class="n">empty_options</span></div>
+
+<div class="viewcode-block" id="PathFinder.get_PathFinder_schema"><a class="viewcode-back" href="../../PathFinder.html#qe_modules.PathFinder.PathFinder.get_PathFinder_schema">[docs]</a>    <span class="k">def</span> <span class="nf">get_PathFinder_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">patchFile</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get latest PF schema from SUT.</span>
+
+<span class="sd">        Update schema per patch file, if specified.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spec</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s1">&#39;http://</span><span class="si">{}</span><span class="s1">/services/apidocs/qed.json&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">host</span><span class="p">))</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s2">&quot;host&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s2">&quot;basePath&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span>
+        <span class="k">if</span> <span class="n">patchFile</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">patchFS</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">patchFile</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>     <span class="c1"># search parent folder for patch file, for Sphinx</span>
+                <span class="n">patchFS</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">,</span> <span class="n">patchFile</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="n">specPatch</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">patchFS</span><span class="p">)</span>
+            <span class="n">patchFS</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">del</span><span class="p">(</span><span class="n">patchFS</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">specPatch</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">subKey</span> <span class="ow">in</span> <span class="n">specPatch</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">subKey</span><span class="p">]</span> <span class="o">=</span> <span class="n">specPatch</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">subKey</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># Jira QED-1903 work-around</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;definitions&#39;</span><span class="p">][</span><span class="s1">&#39;BroadcastCreate&#39;</span><span class="p">][</span>
+                <span class="s1">&#39;required&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;sourceGroups&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;definitions&#39;</span><span class="p">][</span><span class="s1">&#39;BroadcastCreate&#39;</span><span class="p">][</span>
+                <span class="s1">&#39;required&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;streamGroups&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;definitions&#39;</span><span class="p">][</span><span class="s1">&#39;BroadcastCreate&#39;</span><span class="p">][</span><span class="s1">&#39;required&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;streams&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;definitions&#39;</span><span class="p">][</span><span class="s1">&#39;BroadcastCreate&#39;</span><span class="p">][</span><span class="s1">&#39;required&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">)</span>
+            <span class="c1"># Jira QED-1909 work-around</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;definitions&#39;</span><span class="p">][</span><span class="s1">&#39;DistributionFileDetails&#39;</span><span class="p">][</span>
+                <span class="s1">&#39;required&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;streamMetadata&#39;</span><span class="p">)</span>
+            <span class="c1"># Jira QED-1938 work-around</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;definitions&#39;</span><span class="p">][</span><span class="s1">&#39;ExpressionDetails&#39;</span><span class="p">][</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;matchValue&#39;</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;string&quot;</span>
+            <span class="c1"># Jira QED-1939 work-around</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;paths&#39;</span><span class="p">][</span><span class="s1">&#39;/proximities/</span><span class="si">{id}</span><span class="s1">&#39;</span><span class="p">][</span><span class="s1">&#39;delete&#39;</span><span class="p">][</span><span class="s1">&#39;responses&#39;</span><span class="p">][</span><span class="s1">&#39;default&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="s1">&#39;successful operation&#39;</span><span class="p">}</span>
+            <span class="c1"># JIRA QED-1972 work-around</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;paths&#39;</span><span class="p">][</span><span class="s1">&#39;/clients/systemClients&#39;</span><span class="p">][</span><span class="s1">&#39;get&#39;</span><span class="p">][</span><span class="s1">&#39;operationId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;listSystemEntities&#39;</span>
+        <span class="c1"># Create swagger client</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cl</span> <span class="o">=</span> <span class="n">SwaggerClient</span><span class="o">.</span><span class="n">from_spec</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">=</span><span class="p">{</span>
+                <span class="s1">&#39;validate_swagger_spec&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s1">&#39;validate_requests&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s1">&#39;validate_responses&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s1">&#39;also_return_response&#39;</span><span class="p">:</span> <span class="kc">False</span>
+            <span class="p">},</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl</span></div>
+
+<div class="viewcode-block" id="PathFinder.get_schema_objects"><a class="viewcode-back" href="../../PathFinder.html#qe_modules.PathFinder.PathFinder.get_schema_objects">[docs]</a>    <span class="k">def</span> <span class="nf">get_schema_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">patchFile</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get all object definitions from schema.</span>
+
+<span class="sd">        Calls self.get_PathFinder_schema, and then</span>
+<span class="sd">        Returns a swagger client.</span>
+<span class="sd">        Keeps schema in class instance method .schema.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_PathFinder_schema</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">patchFile</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;definitions&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl</span></div>
+
+<div class="viewcode-block" id="PathFinder.print_schema_tree"><a class="viewcode-back" href="../../PathFinder.html#qe_modules.PathFinder.PathFinder.print_schema_tree">[docs]</a>    <span class="k">def</span> <span class="nf">print_schema_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">patchFile</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Print schema tree structure, showing call methods vs schema path.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span>
+        <span class="k">if</span> <span class="s1">&#39;cl&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Error: get_schema_objects first&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Error: get_schema_objects first&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cl</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+                <span class="n">cm</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cl</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">cm</span><span class="p">):</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+                    <span class="n">doc</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cm</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="vm">__doc__</span>
+                    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="s1">&#39;:type body:&#39;</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+                            <span class="n">obj</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/definitions/&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="si">{:40}</span><span class="s1">- </span><span class="si">{:6}</span><span class="se">\t</span><span class="si">{:36}</span><span class="se">\t</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">r</span><span class="p">,</span>
+                        <span class="nb">getattr</span><span class="p">(</span><span class="n">cm</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">http_method</span><span class="p">,</span>
+                        <span class="n">obj</span><span class="p">,</span>
+                        <span class="nb">getattr</span><span class="p">(</span><span class="n">cm</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">path_name</span>
+                    <span class="p">))</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">pf</span> <span class="o">=</span> <span class="n">PathFinder</span><span class="p">(</span><span class="n">PF_Hudson</span><span class="o">=</span><span class="n">PF_Hudson</span><span class="p">,</span>
+                    <span class="n">PF_Branch</span><span class="o">=</span><span class="n">PF_Branch</span><span class="p">,</span>
+                    <span class="n">PF_Type</span><span class="o">=</span><span class="n">PF_Type</span><span class="p">)</span>
+    <span class="n">pf</span><span class="o">.</span><span class="n">upgrade_PF</span><span class="p">(</span><span class="n">PF_SUT</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/qumu-logo-dark-2x.png" alt="Logo"/>
+    
+    <h1 class="logo logo-name">Qumu API Automation</h1>
+    
+  </a>
+</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#setup-sut-components">Setup SUT Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html#configure-sut-components">Configure SUT Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">qe modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../functional.html">functional</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Qumu Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
